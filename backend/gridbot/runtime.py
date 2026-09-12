@@ -120,6 +120,7 @@ class BotRuntime(
         await self._open_store()
         # Never resume entries merely because previous persisted status was running.
         self.status = "DISCONNECTED"
+        await self.restore_verified_account()
         self.tasks.append(asyncio.create_task(self._monitor(), name="safety-monitor"))
 
     async def _open_store(self):

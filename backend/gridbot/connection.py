@@ -5,13 +5,35 @@ from __future__ import annotations
 import asyncio
 import time
 
-from .errors import RiskError, ValidationError
+from .errors import NetworkError, RiskError, ValidationError
 from .models import AccountInfo, Credentials, Environment
 from .orders import OrderManager
 from .reconciliation import ReconciliationService
 
+STARTUP_ACCOUNT_TIMEOUT_SECONDS = 20
+
 
 class AccountConnectionMixin:
+    async def restore_verified_account(self) -> None:
+        """Read/reconcile a saved verified account; never authorize or start trading."""
+        identity = await self.store.get("configuration", "account_identity")
+        if not self.credentials_store.persistent or not identity:
+            return
+        try:
+            # Bound startup so an unavailable exchange cannot hide the local UI.
+            # The existing connect lock and UID checks apply to this path too.
+            await asyncio.wait_for(
+                self.connect(self.environment), timeout=STARTUP_ACCOUNT_TIMEOUT_SECONDS
+            )
+        except asyncio.TimeoutError:
+            await self._disconnect()
+            await self.fail_safe(NetworkError("Riconnessione account scaduta: strategia sospesa"))
+        except Exception as exc:
+            # connect() can fail before its own guarded adapter section, e.g.
+            # inaccessible Keychain. All startup failures remain visible and paused.
+            await self._disconnect()
+            await self.fail_safe(exc)
+
     async def save_credentials(self, credentials: Credentials) -> None:
         async with self.lock:
             if self.status == "RUNNING":

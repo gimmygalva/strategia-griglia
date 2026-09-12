@@ -19,7 +19,9 @@ le API Demo nel Keychain e premere Test Connessione. Il wizard verifica account 
 permessi e Hedge Mode prima della configurazione di Grid, Recovery e limiti di rischio.
 Start esegue una nuova riconciliazione. STOP sospende gli ingressi e cancella soltanto
 gli ingressi pending del bot; conserva posizioni e TP. CHIUDI TUTTO richiede due conferme.
-Dopo un riavvio il bot ricostruisce lo stato ma richiede un nuovo Start per gli ingressi.
+Dopo un riavvio un conto già verificato viene riconnesso dal Keychain e riconciliato;
+gli ingressi richiedono un nuovo Start. Se il collegamento fallisce, l'app si apre
+in pausa di sicurezza con l'errore visibile.
 
 Le credenziali Demo sono state ricevute e sono escluse dai sorgenti e dagli artefatti.
 Il controllo remoto del 12 settembre 2026 ha ricevuto HTTP 403 dal REST Mainnet,

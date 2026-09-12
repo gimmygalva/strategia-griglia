@@ -66,9 +66,11 @@ e il canvas non disponibili in jsdom: non equivalgono a un collaudo visivo dell'
   disponibilità dell'exchange impediscono una garanzia di esecuzione atomica.
 - Aggiornamenti ordine/posizione arrivati prima delle execution possono provocare una
   pausa conservativa. Dopo riconciliazione servono conferma e Avvia per nuovi ingressi.
-- Alla riapertura il ledger locale viene caricato, ma la connessione account deve essere
-  richiesta con Test Connessione prima di Avvia. Non è implementato un reconnect
-  automatico dell'account dal Keychain durante l'inizializzazione del backend.
+- Alla riapertura un conto già verificato viene riconnesso dal Keychain e riconciliato
+  senza riattivare ingressi. Un timeout entro 20 secondi o credenziali non accessibili
+  lascia l'app aperta in pausa di sicurezza; serve risolvere l'errore prima di Avvia.
+  Il primo conto richiede ancora Test Connessione. Su Linux development le credenziali
+  non persistono e il collegamento va richiesto dopo ogni riavvio.
 - Commissioni future e slippage sono stime esplicite. Funding già liquidato entra nel
   target Recovery; funding futuro e impatto del mercato non sono prevedibili. Un TP non
   garantisce il profitto finale in presenza di gap o esecuzioni differenti dal modello.

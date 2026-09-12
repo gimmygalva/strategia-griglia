@@ -41,7 +41,10 @@ del simbolo selezionato. Non viene usata dai test di sviluppo Live.
 Chiudere la finestra richiede pausa e spegnimento dei processi locali. Posizioni e
 ordini sull'exchange non scompaiono chiudendo il programma. Alla riapertura è
 necessaria riconciliazione prima di riabilitare la strategia: non riparte da sola.
-Gli errori di connessione o di stato incerto impediscono nuovi ordini.
+Un conto già verificato viene collegato dal Keychain e riconciliato automaticamente.
+Se il tentativo non termina entro 20 secondi, o la connessione fallisce, l'interfaccia
+si apre con l'errore visibile e gli ingressi sospesi. Il primo conto richiede Test
+Connessione. Gli errori di connessione o di stato incerto impediscono nuovi ordini.
 
 ## Dati e aggiornamenti
 

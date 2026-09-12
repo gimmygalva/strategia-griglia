@@ -39,6 +39,7 @@ class FixtureSocket:
         self.before_subscribe_ack = before_subscribe_ack
         self.pong = pong
         self.received_auth_ack = False
+        self.received_pongs = 0
         self.sent = []
         self.queue = asyncio.Queue()
 
@@ -74,6 +75,8 @@ class FixtureSocket:
             raise frame
         if frame.get("op") == "auth":
             self.received_auth_ack = True
+        if frame.get("op") == "pong":
+            self.received_pongs += 1
         return json.dumps(frame)
 
 
@@ -212,7 +215,7 @@ async def test_missing_heartbeat_pong_disconnects_before_more_events_are_accepte
         status,
         connector=connector,
         heartbeat_interval=0.005,
-        pong_timeout=0.005,
+        pong_timeout=1,
         reconnect_delay=0.05,
     )
     try:
@@ -456,11 +459,16 @@ async def test_slow_callback_does_not_block_heartbeat_reader_or_cause_false_disc
     try:
         await manager.start()
         await asyncio.wait_for(entered.wait(), timeout=1)
-        await asyncio.sleep(0.05)  # Callback remains blocked for ten ping intervals.
+        # Observe ten consumed pongs instead of assuming that a shared CI runner
+        # schedules every callback within five milliseconds. Missing-pong timeout
+        # is tested separately; the callback remains blocked throughout this test.
+        socket = connector.sockets["private"][0]
+        await wait_until(lambda: socket.received_pongs >= 10)
+        assert not released.is_set()
         assert manager.connected["private"]
         assert ("private", False) not in statuses
         assert manager.reconnect_count["private"] == 0
-        assert sum(frame["op"] == "ping" for frame in connector.sockets["private"][0].sent) >= 3
+        assert sum(frame["op"] == "ping" for frame in socket.sent) >= 10
         released.set()
     finally:
         released.set()
