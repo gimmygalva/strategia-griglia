@@ -12,7 +12,11 @@ permissions:
 jobs:
   official-network:
     if: github.ref == 'refs/heads/grid-hedge-bot-demo-20260912'
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, macos-15-intel, macos-15]
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 5
     env:
       ALLOW_MAINNET_TRADING: "false"
@@ -21,10 +25,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - run: python -m pip install --upgrade pip==26.2.1
       - run: python -m pip install -r backend/requirements.txt
       - run: python ci/bybit_network_probe.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: official-bybit-network-evidence
+          name: official-bybit-network-evidence-${{ matrix.runner }}
           path: build/reports/bybit-network.json
