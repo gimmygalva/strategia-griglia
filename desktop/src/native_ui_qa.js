@@ -82,11 +82,41 @@
         () => document.querySelector(".activity-panel"),
         "Activity did not render",
       );
+      // On reopening, safe shutdown has persisted real pause events. Compare
+      // the actual authenticated backend, rather than assuming an empty ledger.
+      const backend = await window.__TAURI_INTERNALS__.invoke("bootstrap");
+      const eventResponse = await fetch(`${backend.url}/api/events`, {
+        headers: { Authorization: `Bearer ${backend.token}` },
+      });
+      if (!eventResponse.ok)
+        throw new Error("Native event API could not be read");
+      const expectedEvents = await eventResponse.json();
+      if (!Array.isArray(expectedEvents))
+        throw new Error("Native event API returned invalid data");
+      const timelineMatches = () => {
+        if (!expectedEvents.length) {
+          return document
+            .querySelector(".activity-panel")
+            .textContent.includes("Nessuna attività registrata");
+        }
+        const rows = [...document.querySelectorAll(".timeline-row")];
+        return (
+          rows.length === expectedEvents.length &&
+          expectedEvents.every(
+            (event, index) =>
+              rows[index].querySelector("h3").textContent === event.title &&
+              rows[index].querySelector(".timeline-content > span")
+                .textContent === event.event.replaceAll("_", " ").toLowerCase(),
+          )
+        );
+      };
+      await wait(
+        timelineMatches,
+        "Native timeline did not match persisted backend events",
+      );
       check(
-        "Activity timeline renders real empty state",
-        document
-          .querySelector(".activity-panel")
-          .textContent.includes("Nessuna attività registrata"),
+        "Activity timeline matches persisted backend events",
+        timelineMatches(),
       );
       button(document, "Mostra dettagli tecnici").click();
       await wait(
