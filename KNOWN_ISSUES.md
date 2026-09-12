@@ -2,11 +2,19 @@
 
 **Questa consegna contiene sorgenti e prove locali. Non è una release macOS definitiva.**
 
+Aggiornamento del 12 settembre 2026: il repository GitHub è collegato e la CI è
+stata eseguita. La suite Linux remota passa. I primi tentativi Mac Intel e Apple
+Silicon hanno rilevato rispettivamente un contratto audit WebSocket incompleto e
+la dipendenza `greenlet` mancante. Le correzioni sono implementate; la nuova build
+deve superare tutte le prove native prima della consegna. Le credenziali Demo sono
+state ricevute e restano escluse dai sorgenti. Gli stati nativi della tabella sotto
+si riferiscono alla verifica precedente; i risultati aggiornati sono nel report.
+
 ## Blocchi esterni alla verifica
 
 | Componente | Stato | Cosa manca |
 | --- | --- | --- |
-| Bybit Demo ufficiale: saldo, account, ordini, execution, mini Grid | NON VERIFICATO | Credenziali Demo dell'utente e rete utilizzabile dal processo dell'app |
+| Bybit Demo ufficiale: saldo, account, ordini, execution, mini Grid | NON VERIFICATO | Rete utilizzabile dal processo dell'app; credenziali ricevute e collaudo remoto da completare |
 | Feed Bybit pubblico ufficiale | NON VERIFICATO | Connessione esterna: REST diretto fallisce, WebSocket non risolve il dominio, proxy esplicito va in timeout |
 | Mainnet reale | NON VERIFICATO | Collaudo account senza trading reale; i test di sviluppo non inviano ordini LIVE |
 | Rust/Tauri nativo | NON VERIFICATO | Toolchain Rust e macOS; il codice desktop non è stato compilato in questa sessione |

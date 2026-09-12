@@ -2,6 +2,7 @@ name: Grid Hedge Bot quality and native Mac packaging
 
 on:
   push:
+    branches: [main, grid-hedge-bot-macos-20260912]
   pull_request:
   workflow_dispatch:
 

@@ -1,5 +1,5 @@
 import { STATUS_LABEL } from './types';
-import type { BotState } from './types';
+import type { BotState, StrategyEvent } from './types';
 
 function object(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -8,6 +8,19 @@ function decimal(value: unknown): boolean {
   return (
     value === null ||
     (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value)))
+  );
+}
+
+export function isStrategyEvent(value: unknown): value is StrategyEvent {
+  return (
+    object(value) &&
+    ((typeof value.id === 'number' && Number.isSafeInteger(value.id) && value.id > 0) ||
+      (typeof value.id === 'string' && value.id.trim() !== '')) &&
+    typeof value.time === 'string' &&
+    Number.isFinite(Date.parse(value.time)) &&
+    typeof value.title === 'string' &&
+    typeof value.event === 'string' &&
+    Object.hasOwn(value, 'details')
   );
 }
 

@@ -84,6 +84,51 @@ describe('realtime account state lifecycle', () => {
     expect(result.current.state.status).toBe('RUNNING');
     expect(result.current.state.price).toBe('68000');
   });
+  it('loads durable audit history while realtime state makes REST state stale', async () => {
+    let resolve!: (value: BotState) => void;
+    const pending = new Promise<BotState>((done) => {
+      resolve = done;
+    });
+    vi.mocked(api.state).mockReturnValue(pending);
+    const first: StrategyEvent = {
+      id: 1,
+      time: '2026-09-12T12:40:00Z',
+      title: 'Primo ordine',
+      event: 'ORDER_ACK',
+      details: {},
+    };
+    const second: StrategyEvent = { ...first, id: 2, title: 'Secondo ordine' };
+    vi.mocked(api.events).mockResolvedValue([first]);
+    const { result } = renderHook(() => useBot());
+    await waitFor(() => expect(sockets.length).toBe(1));
+    act(() => {
+      sockets[0].frame('state', readyState({ status: 'RUNNING', price: '68000' }));
+      sockets[0].frame('event', second);
+      sockets[0].frame('event', second);
+    });
+    await act(async () => {
+      resolve(readyState({ status: 'PAUSED', price: '66000' }));
+      await pending;
+    });
+    await waitFor(() => expect(result.current.events).toHaveLength(2));
+    expect(result.current.events.map((event) => event.id).sort()).toEqual([1, 2]);
+    expect(result.current.state.price).toBe('68000');
+  });
+  it('rejects events without durable identity instead of collapsing the timeline', async () => {
+    const { result } = renderHook(() => useBot());
+    await waitFor(() => expect(sockets.length).toBe(1));
+    await act(async () => {
+      sockets[0].onmessage?.({
+        data: JSON.stringify({
+          type: 'event',
+          data: { title: 'Ordine', event: 'ORDER_ACK', details: {} },
+        }),
+      });
+    });
+    expect(result.current.events).toHaveLength(0);
+    expect(result.current.error).toMatch(/non valido/);
+    expect(sockets[0].close).toHaveBeenCalled();
+  });
   it('shows offline failure and restores read state on reconnection, without starting strategy', async () => {
     vi.mocked(api.state).mockRejectedValueOnce(new Error('Backend unavailable'));
     const { result } = renderHook(() => useBot());

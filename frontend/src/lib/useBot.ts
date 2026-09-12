@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, invalidateBootstrap, notifyFrontendReady, openStateSocket } from './api';
 import { EMPTY_STATE } from './types';
 import type { BotState, StrategyEvent } from './types';
-import { isBotState } from './validation';
+import { isBotState, isStrategyEvent } from './validation';
 
 export function useBot() {
   const [state, setState] = useState<BotState>(EMPTY_STATE);
@@ -14,31 +14,37 @@ export function useBot() {
   const alive = useRef(true);
   const generation = useRef(0);
   const revision = useRef(0);
+  const environment = useRef(EMPTY_STATE.environment);
 
   const refresh = useCallback(async () => {
     const lifecycle = generation.current;
     const requestRevision = ++revision.current;
-    const current = () =>
-      alive.current && lifecycle === generation.current && requestRevision === revision.current;
+    const active = () => alive.current && lifecycle === generation.current;
+    const current = () => active() && requestRevision === revision.current;
     try {
       const next = await api.state();
-      if (!current()) return;
+      if (!active()) return;
       if (!isBotState(next))
         throw new Error('Stato del backend non valido. I comandi di trading restano bloccati.');
-      setState(next);
-      setBackendOnline(true);
-      setError(null);
-      await notifyFrontendReady();
+      if (current()) {
+        if (environment.current !== next.environment) setEvents([]);
+        environment.current = next.environment;
+        setState(next);
+        setBackendOnline(true);
+        setError(null);
+        await notifyFrontendReady();
+      }
       try {
         const audit = await api.events();
-        if (alive.current)
+        if (!audit.every(isStrategyEvent)) throw new Error('Invalid audit');
+        if (active() && environment.current === next.environment)
           setEvents((old) =>
             [...new Map([...audit, ...old].map((event) => [String(event.id), event])).values()]
               .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
               .slice(0, 250),
           );
       } catch {
-        if (alive.current)
+        if (active() && environment.current === next.environment)
           setError('Timeline non disponibile. Verifica la connessione al backend.');
       }
     } catch (err) {
@@ -84,6 +90,8 @@ export function useBot() {
             if (frame.type === 'state') {
               if (!isBotState(frame.data)) throw new Error('Invalid state');
               revision.current++;
+              if (environment.current !== frame.data.environment) setEvents([]);
+              environment.current = frame.data.environment;
               setState(frame.data as BotState);
               setBackendOnline(true);
               setError(null);
@@ -92,6 +100,7 @@ export function useBot() {
                 if (!disposed) setError('Backend in riavvio. Attendi la verifica di salute.');
               });
             } else if (frame.type === 'event') {
+              if (!isStrategyEvent(frame.data)) throw new Error('Invalid strategy event');
               const event = frame.data as StrategyEvent;
               setEvents((old) =>
                 [event, ...old.filter((item) => String(item.id) !== String(event.id))].slice(

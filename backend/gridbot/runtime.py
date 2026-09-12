@@ -150,7 +150,7 @@ class BotRuntime(
 
     async def notify(self, event: str, title: str, details: dict | None = None):
         payload = {"event": event, "title": title, "details": details or {}}
-        await self.store.put("strategy_events", uuid.uuid4().hex, payload)
+        record = await self.store.put("strategy_events", uuid.uuid4().hex, payload)
         logging.getLogger("gridbot").info(
             "strategy_event",
             extra={
@@ -165,7 +165,7 @@ class BotRuntime(
         for queue in tuple(self.listeners):
             if queue.full():
                 queue.get_nowait()
-            queue.put_nowait(payload)
+            queue.put_nowait(record)
 
     async def fail_safe(self, exc: Exception):
         self.reconciled = False

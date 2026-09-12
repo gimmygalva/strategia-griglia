@@ -1,5 +1,23 @@
 # TEST REPORT — GRID HEDGE BOT 0.1.0-dev
 
+## Verifiche native avviate il 12 settembre 2026
+
+GitHub Actions eseguito realmente sul commit `83ad64cab9d01455bc067a739faa2a553738d19a`:
+[run 34697731586](https://github.com/gimmygalva/strategia-griglia/actions/runs/34697731586).
+
+- Suite completa Linux sul runner remoto: PASS.
+- Primo tentativo Mac Intel: FAIL nel test E2E della timeline. Gli eventi WebSocket
+  mancavano di ID e timestamp del record persistito. Corretta la pubblicazione del
+  record dopo commit e aggiunto un test HTTP/WS/REST sul contratto reale.
+- Primo tentativo Mac Apple Silicon: FAIL per la dipendenza `greenlet` assente.
+  Richiesta ora esplicitamente con l'extra ufficiale `SQLAlchemy[asyncio]`.
+- Build e collaudo installer: ancora da completare dopo la ripetizione delle suite.
+- Credenziali Demo ricevute dall'utente. Non sono contenute nel repository o negli
+  artefatti. La rete locale non raggiunge Bybit; collaudo remoto in preparazione.
+
+I risultati seguenti appartengono alla consegna sorgenti precedente, indicata dalla
+data. Non dimostrano il superamento della nuova build nativa o del conto Demo.
+
 Data report: **2026-09-12T13:32:33Z**. Ambiente: Linux x86_64, Python 3.12, Node 24.
 
 **Esito delle prove locali: PASS. Accettazione operativa macOS + Bybit Demo:

@@ -326,14 +326,20 @@ class Store:
                 if D(r.remaining_qty) > 0
             ]
 
-    async def put(self, table: str, key: str, payload: dict):
+    async def put(self, table: str, key: str, payload: dict) -> dict:
         cls = RECORDS[table]
         async with self.lock, self.sessions.begin() as session:
             row = await session.scalar(select(cls).where(cls.key == key))
             if row:
                 row.payload, row.time = payload, utcnow()
             else:
-                session.add(cls(key=key, payload=payload, time=utcnow()))
+                row = cls(key=key, payload=payload, time=utcnow())
+                session.add(row)
+            await session.flush()
+            record = {"id": row.id, "key": row.key, "time": row.time, **row.payload}
+        # Publish only after the transaction has committed. REST and realtime
+        # consumers must see the same durable identifier and UTC timestamp.
+        return record
 
     async def get(self, table: str, key: str) -> dict | None:
         cls = RECORDS[table]

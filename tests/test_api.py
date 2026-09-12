@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import pytest
 from fastapi.testclient import TestClient
 from gridbot.api import create_app
@@ -118,6 +120,35 @@ def test_local_ws_auth_and_state(client):
         assert frame["type"] == "state"
         assert frame["data"]["price"] is None
         assert frame["data"]["environment"] == "DEMO"
+
+
+def test_local_ws_audit_has_the_same_durable_identity_and_time_as_rest(client):
+    received = []
+    with client.websocket_connect("/api/ws", headers={"Origin": "http://testserver"}) as ws:
+        ws.send_json({"type": "authenticate", "token": TOKEN})
+        assert ws.receive_json()["type"] == "state"
+        config = client.get("/api/state", headers=HEADERS).json()["config"]
+        for size in ("120", "130"):
+            response = client.post(
+                "/api/config", json={**config, "order_size_usdt": size}, headers=HEADERS
+            )
+            assert response.status_code == 200
+            for _ in range(8):
+                frame = ws.receive_json()
+                if frame["type"] == "event":
+                    break
+            else:
+                pytest.fail("Evento audit realtime non ricevuto")
+            event = frame["data"]
+            durable = next(
+                item
+                for item in client.get("/api/events", headers=HEADERS).json()
+                if item["id"] == event["id"]
+            )
+            assert event == durable
+            assert datetime.fromisoformat(event["time"]).utcoffset() == timedelta(0)
+            received.append(event)
+    assert len({event["id"] for event in received}) == 2
 
 
 def test_ws_wrong_token_and_origin_rejected(client):

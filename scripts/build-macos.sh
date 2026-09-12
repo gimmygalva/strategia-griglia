@@ -58,9 +58,10 @@ NATIVE_TARGET="$(rustc --print host-tuple)"
 if [[ ! -f desktop/Cargo.lock ]]; then
   cargo generate-lockfile --manifest-path desktop/Cargo.toml
 fi
+cp desktop/Cargo.lock build/reports/Cargo.lock
 cargo fmt --manifest-path desktop/Cargo.toml
 cargo fmt --manifest-path desktop/Cargo.toml --check
-cargo test --manifest-path desktop/Cargo.toml --locked
+cargo test --manifest-path desktop/Cargo.toml --locked 2>&1 | tee build/reports/desktop-rust-tests.txt
 cargo clippy --manifest-path desktop/Cargo.toml --locked --all-targets -- -D warnings
 (cd desktop && npm run tauri -- build --target "$NATIVE_TARGET" --bundles app,dmg -- --locked)
 
