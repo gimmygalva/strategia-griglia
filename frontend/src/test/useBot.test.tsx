@@ -129,6 +129,27 @@ describe('realtime account state lifecycle', () => {
     expect(result.current.error).toMatch(/non valido/);
     expect(sockets[0].close).toHaveBeenCalled();
   });
+  it('does not display queued DEMO events after switching to LIVE with reused record IDs', async () => {
+    const { result } = renderHook(() => useBot());
+    await waitFor(() => expect(sockets.length).toBe(1));
+    const event: StrategyEvent = {
+      id: 1,
+      environment: 'DEMO',
+      time: '2026-09-12T12:40:00Z',
+      title: 'Evento Demo',
+      event: 'ORDER_ACK',
+      details: {},
+    };
+    act(() => {
+      sockets[0].frame('event', event);
+      sockets[0].frame('state', readyState({ environment: 'LIVE' }));
+      sockets[0].frame('event', { ...event, environment: 'LIVE', title: 'Evento Live' });
+      sockets[0].frame('event', event);
+    });
+    expect(result.current.state.environment).toBe('LIVE');
+    expect(result.current.events).toHaveLength(1);
+    expect(result.current.events[0].title).toBe('Evento Live');
+  });
   it('shows offline failure and restores read state on reconnection, without starting strategy', async () => {
     vi.mocked(api.state).mockRejectedValueOnce(new Error('Backend unavailable'));
     const { result } = renderHook(() => useBot());

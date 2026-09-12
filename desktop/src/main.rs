@@ -16,7 +16,16 @@ async fn bootstrap(state: State<'_, Arc<BackendState>>) -> Result<Bootstrap, Str
 }
 
 #[tauri::command]
-async fn frontend_ready(state: State<'_, Arc<BackendState>>) -> Result<(), String> {
+async fn frontend_ready(app: tauri::AppHandle, state: State<'_, Arc<BackendState>>) -> Result<(), String> {
+    // QA observes the actual native window; a mounted hidden WebView alone
+    // cannot establish that the installed application visibly opened.
+    if std::env::var("GRIDBOT_DESKTOP_QA").as_deref() == Ok("1") {
+        let window = app.get_webview_window("main")
+            .ok_or_else(|| "Native application window is missing".to_string())?;
+        if !window.is_visible().map_err(|_| "Native window visibility check failed".to_string())? {
+            return Err("Native application window is not visible yet".to_string());
+        }
+    }
     let state = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || state.confirm_frontend())
         .await

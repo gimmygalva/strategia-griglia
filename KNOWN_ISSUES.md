@@ -1,33 +1,34 @@
-# Known issues — 0.1.0-dev
+# Known issues — 0.1.0 candidatura locale
 
-**Questa consegna contiene sorgenti e prove locali. Non è una release macOS definitiva.**
+**Accettazione operativa Bybit Demo non superata. Non è una release definitiva.**
 
 Aggiornamento del 12 settembre 2026: il repository GitHub è collegato e la CI è
-stata eseguita. La suite Linux remota passa. I primi tentativi Mac Intel e Apple
-Silicon hanno rilevato rispettivamente un contratto audit WebSocket incompleto e
-la dipendenza `greenlet` mancante. Le correzioni sono implementate; la nuova build
-deve superare tutte le prove native prima della consegna. Le credenziali Demo sono
-state ricevute e restano escluse dai sorgenti. Gli stati nativi della tabella sotto
-si riferiscono alla verifica precedente; i risultati aggiornati sono nel report.
+stata eseguita su Linux, Mac Intel e Apple Silicon. Il pacchetto Apple Silicon
+è stato generato, montato, copiato, aperto e riaperto, anche dopo kill del backend.
+I primi errori audit WebSocket e `greenlet` sono corretti. Un test Recovery
+post-build Intel ha poi rilevato una race nella fixture del saldo; corretta usando
+il saldo autorevole del server di test. È in corso la nuova build di entrambe le
+architetture, con verifiche aggiuntive Keychain, finestra visibile e audit dipendenze.
+Le credenziali Demo ricevute restano escluse dai sorgenti e dagli artefatti.
 
 ## Blocchi esterni alla verifica
 
 | Componente | Stato | Cosa manca |
 | --- | --- | --- |
-| Bybit Demo ufficiale: saldo, account, ordini, execution, mini Grid | NON VERIFICATO | Rete utilizzabile dal processo dell'app; credenziali ricevute e collaudo remoto da completare |
-| Feed Bybit pubblico ufficiale | NON VERIFICATO | Connessione esterna: REST diretto fallisce, WebSocket non risolve il dominio, proxy esplicito va in timeout |
+| Bybit Demo ufficiale: saldo, account, ordini, execution, mini Grid | NON VERIFICATO | REST ufficiale e WS privato hanno restituito HTTP 403 nel controllo remoto; credenziali ricevute, non utilizzate |
+| Feed Bybit pubblico ufficiale | PASS nel probe remoto | Ticker BTCUSDT reale ricevuto dal WS pubblico Mainnet; feed nell'app sul conto Demo non verificato |
 | Mainnet reale | NON VERIFICATO | Collaudo account senza trading reale; i test di sviluppo non inviano ordini LIVE |
-| Rust/Tauri nativo | NON VERIFICATO | Toolchain Rust e macOS; il codice desktop non è stato compilato in questa sessione |
-| `Grid Hedge Bot.app` / `Grid Hedge Bot.dmg` | NON GENERATI | Mac Intel / Apple Silicon con toolchain nativa |
-| Montaggio DMG, apertura, clean install e upgrade Mac | NON VERIFICATO | Pacchetto nativo e macchina macOS |
-| macOS Keychain e permessi nativi | NON VERIFICATO | API di sistema macOS; verificata solo l'interfaccia con backend controllato |
+| Rust/Tauri nativo | PASS su entrambe le architetture nella build precedente | Nuova build richiesta per gli ultimi controlli |
+| `Grid Hedge Bot.app` / `Grid Hedge Bot.dmg` | GENERATI su Apple Silicon | Nuova build Intel/Apple Silicon con tutti i test prima dell'approvazione |
+| Montaggio DMG, apertura e persistenza Mac | PASS su Apple Silicon nella build precedente | Nuova build completa e verifica Keychain in corso |
+| macOS Keychain | NON VERIFICATO sulla build attuale | Collaudo nativo del backend incorporato predisposto nella nuova CI |
 | Developer ID / notarizzazione | NON VERIFICATO | Certificato e credenziali Apple; build ad-hoc predisposta |
-| Rendering manuale e smoke UI nel browser / WKWebView | NON VERIFICATO | Il browser disponibile blocca l'URL locale; le prove React usano jsdom |
-| Audit vulnerabilità dipendenze Python | NON VERIFICATO | pip-audit installato ed eseguito; la richiesta alle advisory PyPI va in timeout. Audit npm frontend/desktop eseguiti separatamente |
+| Rendering visivo manuale delle schermate | NON VERIFICATO | WKWebView già avviata; nuova verifica finestra visibile e cattura schermo in CI, distinta dai test DOM |
+| Audit vulnerabilità dipendenze Python/Rust | NON VERIFICATO sulla build attuale | Nuova CI dedicata pip-audit/cargo-audit; audit npm frontend/desktop già superati |
 
-Un backend incorporato Linux funzionante non dimostra che un bundle Mac si apra.
-Gli script e la CI preparati non sono una build macOS già eseguita. Non esiste un
-file rinominato `.dmg` per nascondere questo limite.
+Gli esiti di ciascun pacchetto nativo sono nel report e nel suo manifest, associati
+alla specifica architettura e build. Il controllo della struttura di firma ad-hoc
+non dimostra che Gatekeeper accetti una nuova app scaricata con quarantena.
 Le prove DOM React con traffico HTTP/WS reale sostituiscono il bridge nativo Tauri
 e il canvas non disponibili in jsdom: non equivalgono a un collaudo visivo dell'app Mac.
 
@@ -66,8 +67,8 @@ e il canvas non disponibili in jsdom: non equivalgono a un collaudo visivo dell'
   storico esatto dell'account. Assenza della candela richiesta blocca nuovi ingressi.
 - Su Linux le credenziali sono solo in memoria, per sviluppo. La persistenza definitiva
   dei secret è progettata per macOS Keychain, non per un keyring plaintext alternativo.
-- `Cargo.lock` deve essere risolto e conservato sulla prima build nativa validata.
-  La risoluzione Rust non è stata eseguita in questo ambiente privo di Cargo.
+- `Cargo.lock` è ora conservato nel repository dalla build nativa validata;
+  build e test Rust utilizzano `--locked`.
 
 ## Funzioni successive all'MVP
 
@@ -80,6 +81,6 @@ Notifiche applicative sono registrate e trasmesse alla UI; notifiche native desk
 Telegram, email e un updater automatico rimangono estensioni future.
 La migrazione operativa a PostgreSQL non è implementata.
 
-Il report elenca i risultati effettivi dell'ultima suite. Non risultano test locali
-falliti lasciati senza correzione alla consegna; le verifiche esterne sopra impediscono
-comunque di dichiarare completato il flusso operativo macOS + Bybit Demo.
+Il report distingue risultati storici e build attuale. Un test critico fallito
+impedisce l'approvazione del pacchetto; le verifiche Bybit e Apple mancanti restano
+esplicite anche se le suite automatiche dell'app passano.

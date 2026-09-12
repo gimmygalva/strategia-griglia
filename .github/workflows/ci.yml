@@ -3,6 +3,7 @@ name: Grid Hedge Bot quality and native Mac packaging
 on:
   push:
     branches: [main, grid-hedge-bot-macos-20260912]
+    paths-ignore: ['**/*.md']
   pull_request:
   workflow_dispatch:
 
@@ -10,6 +11,43 @@ permissions:
   contents: read
 
 jobs:
+  dependency-security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ALLOW_MAINNET_TRADING: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: dtolnay/rust-toolchain@stable
+      - run: python -m venv .audit-venv
+      - run: .audit-venv/bin/python -m pip install -r backend/requirements-dev.txt -r scripts/requirements-packaging.txt pip-audit==2.10.1
+      - run: mkdir -p build/reports
+      - run: .audit-venv/bin/python -m pip_audit --local --strict --format=json --output=build/reports/python-dependency-audit.json
+      - run: npm --prefix frontend ci
+        if: always()
+      - run: npm --prefix frontend audit --json > build/reports/frontend-dependency-audit.json
+        if: always()
+      - run: npm --prefix desktop ci
+        if: always()
+      - run: npm --prefix desktop audit --json > build/reports/desktop-dependency-audit.json
+        if: always()
+      - run: cargo install cargo-audit --version 0.22.2 --locked
+        if: always()
+        id: install-rust-audit
+      - run: cargo audit --file desktop/Cargo.lock --json > build/reports/rust-dependency-audit.json
+        if: always() && steps.install-rust-audit.outcome == 'success'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-security-evidence
+          path: build/reports/
+
   quality:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -43,7 +81,7 @@ jobs:
           path: build/reports/
 
   macos-package:
-    needs: quality
+    needs: [quality, dependency-security]
     strategy:
       fail-fast: false
       matrix:

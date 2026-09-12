@@ -2,11 +2,13 @@
 
 ## Stato della consegna
 
-Il codice di packaging è implementato. La sessione di sviluppo disponibile è Linux;
-non sono disponibili macOS, Xcode, `hdiutil`, `codesign`, Cargo o certificati Apple.
-La generazione/apertura di `Grid Hedge Bot.app` e `Grid Hedge Bot.dmg` è quindi
-**NON VERIFICATA in questa sessione**. Non viene creato un file vuoto o rinominato
-come DMG. Gli esiti effettivi sono in `TEST_REPORT.md`.
+La pipeline è eseguita realmente su GitHub Actions macOS 15 Intel e Apple Silicon.
+Produce bundle Tauri nativi con backend Python congelato, genera un vero DMG,
+lo monta e avvia la copia dell'app. Gli esiti per ciascuna build e architettura
+sono in `TEST_REPORT.md` e nel `dist/BUILD_MANIFEST.json` di quel pacchetto.
+Il primo pacchetto Apple Silicon ha superato queste prove; il test post-build Intel
+ha rilevato una race nella fixture del saldo Recovery, corretta prima della nuova
+build. Nessun pacchetto Intel viene approvato con quel test fallito.
 
 Una compilazione nativa che supera tutti i controlli produce un candidato locale;
 la validazione con un account Bybit Demo dell'utente resta necessaria prima di
@@ -14,7 +16,7 @@ considerare completato il flusso operativo richiesto.
 
 ## Mac di compilazione
 
-Servono macOS 13+, Xcode Command Line Tools, Rust 1.84+ con Cargo/rustfmt/clippy,
+Servono macOS 13+, Xcode Command Line Tools, Rust stable con Cargo/rustfmt/clippy,
 Python 3.12+ e Node 22+ con npm. Queste dipendenze servono **solo al compilatore**.
 Il pacchetto contiene il frontend compilato, l'eseguibile desktop Tauri e il backend
 Python congelato con PyInstaller. L'utilizzatore dell'app non deve installarle.
@@ -23,7 +25,9 @@ La build è nativa per architettura: Intel usa `x86_64-apple-darwin`, Apple Sili
 usa `aarch64-apple-darwin`. Non si dichiara una build Universal senza verificarla.
 La pipeline `.github/workflows/ci.yml` prepara due runner separati, `macos-15-intel`
 e `macos-15`, secondo le [architetture ufficiali dei runner GitHub](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
-La pipeline non è stata avviata in questa sessione e non costituisce prova di PASS.
+Sono usati macOS 15, Python 3.12, Node 22 e Rust stable; il supporto a versioni
+precedenti di macOS non è dimostrato da questi runner. macOS 15.5 dell'utente
+è nel requisito di sistema dichiarato ma non è la versione esatta del runner.
 
 ## Comando di build
 
@@ -64,6 +68,7 @@ verifiche e limiti esterni. La classificazione è
 1. verifica e monta il DMG in sola lettura;
 2. controlla l'app e il collegamento Applications;
 3. copia l'app con `ditto` e verifica la struttura di firma;
+   controlla anche il flag Hardened Runtime della firma effettiva;
 4. avvia l'eseguibile della copia con directory dati vuota e PATH di soli tool OS;
 5. attende backend autenticato e frontend nativo operativo;
 6. verifica migrazioni, integrità SQLite, permessi e Mainnet disabilitata;
@@ -72,6 +77,14 @@ verifiche e limiti esterni. La classificazione è
 9. riapre l'app e verifica dati conservati;
 10. uccide il sidecar, attende riavvio e nuova inizializzazione frontend, controlla
     che il trading non riparta automaticamente e chiude di nuovo.
+
+Sui runner CI isolati, un controllo aggiuntivo usa credenziali sintetiche per
+salvare e rileggere il Keychain nativo attraverso il backend dentro la copia
+dell'app. Verifica separazione DEMO/LIVE, persistenza tra processi e assenza del
+secret in API, database, impostazioni e log. Non autentica un conto Bybit.
+Il marker frontend richiede anche che la finestra nativa sia visibile. Viene
+tentata una cattura schermo reale; se il runner la impedisce l'esito visivo è
+NON VERIFICATO e viene riportato separatamente.
 
 La verifica usa un flag QA esplicito e una directory temporanea; non tocca i dati
 reali dell'utente, non utilizza le sue credenziali e non invia ordini Live.
@@ -129,10 +142,11 @@ pacchetto e ripetere installazione da download su un Mac distinto.
 ## Riproducibilità e aggiornamenti
 
 `package-lock.json` desktop/frontend e i requirements fissano le dipendenze JS e
-Python. Il primo Mac genera `desktop/Cargo.lock`; conservarlo nel repository prima
-della distribuzione per fissare anche le dipendenze Rust. L'assenza attuale di un
-lockfile Rust risolto è un limite documentato, non un artefatto inventato.
-`cargo --locked` è usato nei controlli e nella build successiva alla risoluzione.
+Python. `desktop/Cargo.lock` proviene dalla build nativa Apple Silicon verificata
+ed è conservato nel repository per fissare anche le dipendenze Rust.
+`cargo --locked` è usato nei controlli e nella build. La CI esegue pip-audit,
+cargo-audit e npm audit prima di autorizzare il packaging nativo; il manifest
+non sostituisce i risultati degli audit o il collaudo Bybit ufficiale.
 
 Aggiornamenti futuri sostituiscono il bundle `.app` e applicano migrazioni al
 database esterno al bundle. Eseguire sempre backup e test di upgrade con una copia

@@ -1,4 +1,34 @@
-# TEST REPORT — GRID HEDGE BOT 0.1.0-dev
+# TEST REPORT — GRID HEDGE BOT 0.1.0 candidatura locale
+
+## Stato attuale — 12 settembre 2026
+
+La nuova suite locale ha superato 387 test Python e 95 test frontend, più un
+test E2E DOM con 15 verifiche HTTP/WS reali. È stata poi corretta una race nella
+fixture del saldo Recovery rilevata dal test post-build Intel: il test modifica
+ora il saldo sul server e attende il wallet del bot, per LONG e SHORT.
+La suite Recovery aggiornata ha superato 33 test. Il caso di saldo insufficiente
+LONG/SHORT ha superato cinque ripetizioni consecutive; la suite backend completa
+successiva è passata alle 14:40:06 UTC, senza failure, errori o skip. Build frontend
+pulita e backend Linux incorporato avviato/riaperto sono passati separatamente.
+La nuova build nativa deve ancora terminare.
+
+Nel [run nativo 34698408928](https://github.com/gimmygalva/strategia-griglia/actions/runs/34698408928),
+la build Apple Silicon ha superato Rust, packaging, montaggio/copia DMG, apertura
+dell'app, database vuoto, migrazioni, riapertura, crash sidecar e suite post-build.
+Intel ha superato il controllo di apertura/persistenza del pacchetto ma ha fallito
+il test post-build Recovery citato sopra; nessun candidato Intel è stato approvato.
+La nuova build aggiunge Keychain reale, flag Hardened Runtime effettivi,
+visibilità della finestra e audit Python/Rust. Questi nuovi controlli non sono
+ancora dichiarati PASS.
+
+Nel [probe Bybit 34698486415](https://github.com/gimmygalva/strategia-griglia/actions/runs/34698486415),
+REST Mainnet, REST Demo e WS privato Demo hanno restituito **HTTP 403**.
+Il WS pubblico Mainnet ha ricevuto un ticker BTCUSDT reale: **PASS**.
+Credenziali ricevute, **non utilizzate**, ordini inviati **0**.
+Saldo, UID, account UTA, Hedge Mode, ordini, execution e mini Grid sul conto Demo:
+**NON VERIFICATO**. Non viene aggirato il blocco usando Testnet o altri endpoint.
+
+I risultati sotto sono storici; non attribuiscono PASS alle verifiche nuove.
 
 ## Verifiche native avviate il 12 settembre 2026
 

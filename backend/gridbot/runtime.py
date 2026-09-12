@@ -149,7 +149,12 @@ class BotRuntime(
         tmp.replace(target)
 
     async def notify(self, event: str, title: str, details: dict | None = None):
-        payload = {"event": event, "title": title, "details": details or {}}
+        payload = {
+            "event": event,
+            "title": title,
+            "details": details or {},
+            "environment": self.environment.value,
+        }
         record = await self.store.put("strategy_events", uuid.uuid4().hex, payload)
         logging.getLogger("gridbot").info(
             "strategy_event",

@@ -603,17 +603,23 @@ async def test_manual_recovery_static_max_injection_blocks_before_exchange_mutat
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("side", [Side.LONG, Side.SHORT])
 async def test_manual_recovery_dynamic_available_margin_blocks_mathematically_feasible_plan(
-    local_bybit_server, tmp_path
+    local_bybit_server, tmp_path, side
 ):
     runtime = make_runtime(tmp_path, local_bybit_server)
     try:
-        await prepare_losing_lot(runtime, local_bybit_server, Side.SHORT)
+        await prepare_losing_lot(runtime, local_bybit_server, side)
         assert (await runtime.recovery_plans())[0]["safe"] is True
-        runtime.account.available_balance = D(0)
+        # Change the authoritative exchange balance, then wait for the real wallet
+        # stream/REST refresh. Mutating only the runtime cache races with queued
+        # wallet events from the earlier fill and can restore the original balance.
+        local_bybit_server.state.available_balance = D(0)
+        await local_bybit_server.state.broadcast("wallet", [local_bybit_server.state.wallet()])
+        await wait_for(lambda: runtime.account.available_balance == D(0))
         before = len(local_bybit_server.state.orders)
         with pytest.raises(RiskError, match="Saldo"):
-            await runtime.inject(Side.SHORT, True)
+            await runtime.inject(side, True)
         assert len(local_bybit_server.state.orders) == before
         assert not runtime.active_recovery
     finally:

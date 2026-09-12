@@ -14,6 +14,7 @@ function decimal(value: unknown): boolean {
 export function isStrategyEvent(value: unknown): value is StrategyEvent {
   return (
     object(value) &&
+    (value.environment === undefined || ['DEMO', 'LIVE'].includes(String(value.environment))) &&
     ((typeof value.id === 'number' && Number.isSafeInteger(value.id) && value.id > 0) ||
       (typeof value.id === 'string' && value.id.trim() !== '')) &&
     typeof value.time === 'string' &&

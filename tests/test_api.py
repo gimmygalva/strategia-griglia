@@ -21,6 +21,7 @@ def client(tmp_path):
     )
     app = create_app(runtime, TOKEN, 1234, static, test_origin="http://testserver")
     with TestClient(app) as client:
+        client.runtime_fixture = runtime
         yield client
 
 
@@ -66,6 +67,27 @@ def test_credentials_write_only_redacted_invalid_input(client):
     assert response.status_code == 422
     assert body["api_secret"] not in response.text
     assert body["api_key"] not in response.text
+
+
+def test_credential_metadata_is_authenticated_write_only_and_environment_scoped(client):
+    assert client.get("/api/credentials/status").status_code == 401
+    path = "/api/credentials/status"
+    assert client.get(path, headers=HEADERS).json()["configured"] is False
+    body = {
+        "environment": "DEMO",
+        "api_key": "metadata-key-only",
+        "api_secret": "metadata-secret-only",
+    }
+    assert client.post("/api/credentials", json=body, headers=HEADERS).json() == {"saved": True}
+    response = client.get(path, headers=HEADERS)
+    assert response.json() == {
+        "environment": "DEMO",
+        "configured": True,
+        "storage": "Memory only (development)",
+    }
+    assert body["api_key"] not in response.text and body["api_secret"] not in response.text
+    assert client.get(path + "?environment=LIVE", headers=HEADERS).json()["configured"] is False
+    assert client.get(path + "?environment=TESTNET", headers=HEADERS).status_code == 422
 
 
 def test_origin_host_csrf_controls(client):
@@ -146,9 +168,18 @@ def test_local_ws_audit_has_the_same_durable_identity_and_time_as_rest(client):
                 if item["id"] == event["id"]
             )
             assert event == durable
+            assert event["environment"] == "DEMO"
             assert datetime.fromisoformat(event["time"]).utcoffset() == timedelta(0)
             received.append(event)
     assert len({event["id"] for event in received}) == 2
+
+
+def test_legacy_audit_rows_inherit_the_actual_database_environment(client):
+    payload = {"title": "Evento precedente", "event": "legacy", "details": {}}
+    client.portal.call(client.runtime_fixture.store.put, "strategy_events", "legacy", payload)
+    events = client.get("/api/events", headers=HEADERS).json()
+    assert len(events) == 1 and events[0]["environment"] == "DEMO"
+    assert events[0]["title"] == payload["title"]
 
 
 def test_ws_wrong_token_and_origin_rejected(client):

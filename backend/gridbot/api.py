@@ -205,7 +205,11 @@ def create_app(
 
     @app.get("/api/events")
     async def events():
-        return await runtime.store.records("strategy_events")
+        async with runtime.lock:
+            records = await runtime.store.records("strategy_events")
+            # Older ledger rows predate explicit event environments. The actor
+            # lock binds the rows and their namespace to one coherent snapshot.
+            return [{**record, "environment": runtime.environment.value} for record in records]
 
     @app.get("/api/orders")
     async def orders():
@@ -227,6 +231,15 @@ def create_app(
     async def credentials(body: CredentialsInput):
         await runtime.save_credentials(Credentials(**body.model_dump()))
         return {"saved": True}
+
+    @app.get("/api/credentials/status")
+    async def credential_status(environment: Environment = Environment.DEMO):
+        saved = await asyncio.to_thread(runtime.credentials_store.load, environment)
+        return {
+            "environment": environment.value,
+            "configured": saved is not None,
+            "storage": runtime.credentials_store.storage_description,
+        }
 
     @app.post("/api/connect")
     async def connect(body: ConnectInput):

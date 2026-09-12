@@ -73,7 +73,7 @@ def main() -> None:
         "architecture": platform.machine(),
         "tests": reports,
         "external_tests_not_verified": [
-            "Real Bybit Demo Trading account, hedge orders, fills, TP and reconciliation without user credentials",
+            "Official Bybit Demo account/order acceptance not yet verified; remote REST/private WebSocket preflight blocked by HTTP 403",
             "Developer ID certificate and Apple notarization unless separately configured and verified",
             "Clean end-user Gatekeeper installation after browser download with quarantine",
         ],

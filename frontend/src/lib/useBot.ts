@@ -39,7 +39,16 @@ export function useBot() {
         if (!audit.every(isStrategyEvent)) throw new Error('Invalid audit');
         if (active() && environment.current === next.environment)
           setEvents((old) =>
-            [...new Map([...audit, ...old].map((event) => [String(event.id), event])).values()]
+            [
+              ...new Map(
+                [...audit, ...old]
+                  .filter(
+                    (event) =>
+                      event.environment === undefined || event.environment === environment.current,
+                  )
+                  .map((event) => [String(event.id), event]),
+              ).values(),
+            ]
               .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
               .slice(0, 250),
           );
@@ -102,6 +111,8 @@ export function useBot() {
             } else if (frame.type === 'event') {
               if (!isStrategyEvent(frame.data)) throw new Error('Invalid strategy event');
               const event = frame.data as StrategyEvent;
+              if (event.environment !== undefined && event.environment !== environment.current)
+                return;
               setEvents((old) =>
                 [event, ...old.filter((item) => String(item.id) !== String(event.id))].slice(
                   0,

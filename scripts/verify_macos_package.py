@@ -8,6 +8,7 @@ import json
 import os
 import platform
 import plistlib
+import re
 import signal
 import sqlite3
 import subprocess
@@ -18,8 +19,10 @@ from typing import Any
 
 if __package__:
     from .verify_frozen_backend import find_database
+    from .verify_frozen_backend import verify as verify_sidecar
 else:
     from verify_frozen_backend import find_database
+    from verify_frozen_backend import verify as verify_sidecar
 
 
 def wait_marker(
@@ -70,7 +73,7 @@ def close_window(data_dir: Path, process: subprocess.Popen[bytes], child_pid: in
         raise RuntimeError("Window close left an orphan backend process")
 
 
-def verify(dmg: Path, root: Path) -> list[str]:
+def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[str]:
     checks: list[str] = []
     mount = root / "mount"
     mount.mkdir()
@@ -92,8 +95,17 @@ def verify(dmg: Path, root: Path) -> list[str]:
             check=True,
             capture_output=True,
         )
+        signature = subprocess.run(
+            ["codesign", "--display", "--verbose=4", str(copied)],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stderr
+        flags = re.search(r"flags=0x[0-9a-fA-F]+\(([^)]*)\)", signature)
+        if flags is None or "runtime" not in flags.group(1).split(","):
+            raise RuntimeError("Installed application is missing actual Hardened Runtime flags")
         checks.append(
-            "DMG verified, mounted, Applications link present, application copied, signature structure verified"
+            "DMG verified, mounted, Applications link present, application copied, signature structure and actual Hardened Runtime verified"
         )
     finally:
         subprocess.run(["hdiutil", "detach", str(mount)], check=True, capture_output=True)
@@ -103,6 +115,10 @@ def verify(dmg: Path, root: Path) -> list[str]:
     sidecar = copied / "Contents" / "MacOS" / "gridbot-backend"
     if not executable.is_file() or not sidecar.is_file():
         raise RuntimeError("Application executable or frozen backend was not bundled")
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        keychain_data = root / "isolated-keychain-probe"
+        keychain_data.mkdir(mode=0o700)
+        checks.extend(verify_sidecar(sidecar, keychain_data, verify_keychain=True))
     data_dir = root / "clean-user-data"
     data_dir.mkdir(mode=0o700)
     environment = {
@@ -127,6 +143,23 @@ def verify(dmg: Path, root: Path) -> list[str]:
             if marker.get("bot_status") == "RUNNING" or marker.get("mainnet_allowed") is not False:
                 raise RuntimeError(
                     "Installed app auto-started trading or enabled Mainnet by default"
+                )
+            if screenshot_dir is not None:
+                screenshot = screenshot_dir / f"macos-installed-app-run-{run}.png"
+                screenshot.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    capture = subprocess.run(
+                        ["/usr/sbin/screencapture", "-x", str(screenshot)],
+                        capture_output=True,
+                        timeout=10,
+                    )
+                    captured = capture.returncode == 0 and screenshot.is_file()
+                except (OSError, subprocess.TimeoutExpired):
+                    captured = False
+                checks.append(
+                    f"Native screenshot saved: {screenshot.name}"
+                    if captured
+                    else "Native screenshot: NON VERIFICATO; runner screen-capture access unavailable"
                 )
             database = find_database(data_dir)
             with sqlite3.connect(database) as connection:
@@ -186,7 +219,7 @@ def main() -> None:
     if not arguments.dmg.is_file():
         raise SystemExit("A generated real DMG is required")
     with tempfile.TemporaryDirectory(prefix="gridbot-package-qa-") as directory:
-        checks = verify(arguments.dmg.resolve(), Path(directory))
+        checks = verify(arguments.dmg.resolve(), Path(directory), arguments.report.parent.resolve())
     report = {
         "result": "PASS",
         "checks": checks,
@@ -194,7 +227,7 @@ def main() -> None:
         "platform": platform.platform(),
         "architecture": platform.machine(),
         "limitations": [
-            "Bybit Demo order/execution verification requires user-provided Demo credentials",
+            "Official Bybit account/order acceptance is separate; remote REST/private WS preflight returned HTTP 403",
             "Gatekeeper download quarantine and notarization require signed release and external install",
         ],
     }

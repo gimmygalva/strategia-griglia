@@ -152,6 +152,7 @@ export interface BotState {
 }
 export interface StrategyEvent {
   id: string | number;
+  environment?: Environment;
   time: string;
   title: string;
   event: string;

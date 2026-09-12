@@ -7,6 +7,7 @@ import argparse
 import asyncio
 import json
 import os
+import platform
 import queue
 import secrets
 import sqlite3
@@ -131,8 +132,21 @@ def stop(process: subprocess.Popen[str], url: str | None, token: str) -> None:
         raise RuntimeError(f"Frozen backend exit code: {process.returncode}")
 
 
-def verify(binary: Path, data_dir: Path) -> list[str]:
+def verify(binary: Path, data_dir: Path, *, verify_keychain: bool = False) -> list[str]:
     checks: list[str] = []
+    if verify_keychain and (
+        platform.system() != "Darwin" or os.environ.get("GITHUB_ACTIONS") != "true"
+    ):
+        raise RuntimeError("Native Keychain fixtures require an isolated macOS CI runner")
+    fixture = (
+        {
+            "environment": "DEMO",
+            "api_key": "keychain-fixture-" + secrets.token_hex(16),
+            "api_secret": secrets.token_hex(32),
+        }
+        if verify_keychain
+        else None
+    )
     for run in (1, 2):
         token = secrets.token_hex(32)
         process = launch(binary, data_dir, token)
@@ -145,6 +159,29 @@ def verify(binary: Path, data_dir: Path) -> list[str]:
             state = request(url, token, "/api/state")
             if state.get("status") == "RUNNING":
                 raise RuntimeError("Frozen backend resumed automatic trading without confirmation")
+            if fixture is not None:
+                metadata = request(url, token, "/api/credentials/status")
+                if metadata.get("storage") != "macOS Keychain":
+                    raise RuntimeError("Bundled backend did not select native macOS Keychain")
+                if run == 1:
+                    if metadata.get("configured") is not False:
+                        raise RuntimeError(
+                            "Keychain fixture refuses to overwrite existing credentials"
+                        )
+                    if request(url, token, "/api/credentials", fixture) != {"saved": True}:
+                        raise RuntimeError("Native Keychain save failed")
+                    metadata = request(url, token, "/api/credentials/status")
+                if metadata.get("configured") is not True:
+                    raise RuntimeError(
+                        "Native Keychain lost credentials across bundled-process restart"
+                    )
+                other = request(url, token, "/api/credentials/status?environment=LIVE")
+                if other.get("configured") is not False:
+                    raise RuntimeError("Native Keychain DEMO/LIVE credential namespaces collided")
+                exported = json.dumps(state) + json.dumps(metadata) + json.dumps(other)
+                exported += json.dumps(request(url, token, "/api/events"))
+                if any(fixture[field] in exported for field in ("api_key", "api_secret")):
+                    raise RuntimeError("Native credential leaked into a frontend API response")
             asyncio.run(verify_websocket(url, token))
             index_request = urllib.request.Request(
                 url + "/", headers={"Authorization": f"Bearer {token}"}
@@ -176,6 +213,15 @@ def verify(binary: Path, data_dir: Path) -> list[str]:
                     raise RuntimeError("Frozen backend lost existing data on restart")
             if (data_dir.stat().st_mode & 0o077) != 0:
                 raise RuntimeError("Frozen backend data directory is not owner-only")
+            if fixture is not None:
+                for path in data_dir.rglob("*"):
+                    if path.is_file() and any(
+                        fixture[field].encode() in path.read_bytes()
+                        for field in ("api_key", "api_secret")
+                    ):
+                        raise RuntimeError(
+                            "Native credential leaked into local database/settings/logs"
+                        )
             checks.append(
                 f"run {run}: health, authenticated WebSocket, embedded frontend, guarded Mainnet, paused startup, migrations, database integrity"
             )
@@ -183,6 +229,10 @@ def verify(binary: Path, data_dir: Path) -> list[str]:
             stop(process, url, token)
     checks.append("embedded runtime: PATH contains no Python/Node/Docker dependencies")
     checks.append("existing database survives graceful shutdown and reopen")
+    if fixture is not None:
+        checks.append(
+            "Actual bundled macOS backend saves to native Keychain; new process reloads; DEMO/LIVE separated; secret absent from frontend/database/settings/logs"
+        )
     token = secrets.token_hex(32)
     process = launch(binary, data_dir, token, parent_pipe=True)
     url = None
