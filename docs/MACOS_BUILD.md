@@ -6,13 +6,15 @@ La pipeline è eseguita realmente su GitHub Actions macOS 15 Intel e Apple Silic
 Produce bundle Tauri nativi con backend Python congelato, genera un vero DMG,
 lo monta e avvia la copia dell'app. Gli esiti per ciascuna build e architettura
 sono in `TEST_REPORT.md` e nel `dist/BUILD_MANIFEST.json` di quel pacchetto.
-Il primo pacchetto Apple Silicon ha superato queste prove; il test post-build Intel
-ha rilevato una race nella fixture del saldo Recovery, corretta prima della nuova
-build. Nessun pacchetto Intel viene approvato con quel test fallito.
+L'ultima candidata del 12 settembre 2026 ha superato queste prove su entrambe le
+architetture, incluse le suite complete ripetute dopo la build. Gli errori dei
+tentativi precedenti e le correzioni ritestate sono documentati in `TEST_REPORT.md`.
 
 Una compilazione nativa che supera tutti i controlli produce un candidato locale;
 la validazione con un account Bybit Demo dell'utente resta necessaria prima di
-considerare completato il flusso operativo richiesto.
+considerare completato il flusso operativo richiesto. I probe Linux e Mac hanno
+ricevuto HTTP 403 dal REST e dal WebSocket privato ufficiali: nessuna credenziale
+dell'utente è stata utilizzata e nessun ordine ufficiale è stato inviato.
 
 ## Mac di compilazione
 
