@@ -2,49 +2,30 @@
 
 **Accettazione operativa Bybit Demo non superata. Non è una release definitiva.**
 
-Aggiornamento del 12 settembre 2026: il repository GitHub è collegato e la CI è
-stata eseguita su Linux, Mac Intel e Apple Silicon. Il pacchetto Apple Silicon
-è stato generato, montato, copiato, aperto e riaperto, anche dopo kill del backend.
-I primi errori audit WebSocket e `greenlet` sono corretti. Un test Recovery
-post-build Intel ha poi rilevato una race nella fixture del saldo; corretta usando
-il saldo autorevole del server di test. È in corso la nuova build di entrambe le
-architetture, con verifiche aggiuntive Keychain, finestra visibile e audit dipendenze.
-Le credenziali Demo ricevute restano escluse dai sorgenti e dagli artefatti.
+Entrambi i candidati Intel/Apple Silicon hanno superato build nativa, montaggio/copia
+DMG, apertura/riapertura WKWebView, Keychain, CA incorporate, persistenza e crash
+sidecar, con suite complete post-build. Le build fallite precedenti sono escluse.
 
-## Blocchi esterni alla verifica
+## Verifiche non completate
 
-| Componente | Stato | Cosa manca |
+| Componente | Stato | Limite reale |
 | --- | --- | --- |
-| Bybit Demo ufficiale: saldo, account, ordini, execution, mini Grid | NON VERIFICATO | REST ufficiale e WS privato hanno restituito HTTP 403 nel controllo remoto; credenziali ricevute, non utilizzate |
-| Feed Bybit pubblico ufficiale | PASS nel probe remoto | Ticker BTCUSDT reale ricevuto dal WS pubblico Mainnet; feed nell'app sul conto Demo non verificato |
-| Mainnet reale | NON VERIFICATO | Collaudo account senza trading reale; i test di sviluppo non inviano ordini LIVE |
-| Rust/Tauri nativo | PASS su entrambe le architetture nella build precedente | Nuova build richiesta per gli ultimi controlli |
-| `Grid Hedge Bot.app` / `Grid Hedge Bot.dmg` | GENERATI su Apple Silicon | Nuova build Intel/Apple Silicon con tutti i test prima dell'approvazione |
-| Montaggio DMG, apertura e persistenza Mac | PASS su Apple Silicon nella build precedente | Nuova build completa e verifica Keychain in corso |
-| macOS Keychain | NON VERIFICATO sulla build attuale | Collaudo nativo del backend incorporato predisposto nella nuova CI |
-| Developer ID / notarizzazione | NON VERIFICATO | Certificato e credenziali Apple; build ad-hoc predisposta |
-| Rendering visivo manuale delle schermate | NON VERIFICATO | WKWebView già avviata; nuova verifica finestra visibile e cattura schermo in CI, distinta dai test DOM |
-| Audit vulnerabilità dipendenze Python/Rust | NON VERIFICATO sulla build attuale | Nuova CI dedicata pip-audit/cargo-audit; audit npm frontend/desktop già superati |
+| Conto Bybit Demo: saldo, UTA/Hedge, ordini, execution, Grid/TP | NON VERIFICATO | REST Mainnet/Demo e WS privato Demo HTTP 403 da Linux e Mac; API ricevute ma non usate |
+| Feed pubblico ufficiale | PASS nei probe remoti | Ticker BTCUSDT reale; dati account e feed dentro l'app con conto Demo non verificati |
+| LIVE account / trading | NON VERIFICATO | Default disabilitata; nessun ordine reale durante sviluppo |
+| Developer ID, notarizzazione, Gatekeeper download | NON VERIFICATO | Certificati Apple assenti; firma ad-hoc Hardened Runtime verificata |
+| macOS 15.5 esatto / dispositivo utente | NON VERIFICATO | Runner Mac 15.7.9 reali verificati, hardware utente non disponibile |
+| Clean VM senza toolchain / upgrade tra versioni | NON VERIFICATO | Ambiente/PATH senza runtime esterni e riapertura con DB persistente verificati |
+| Revisione grafica manuale completa | NON VERIFICATO | Catture Home offline e controlli DOM WKWebView; non screenshot di tutte le pagine |
 
-Gli esiti di ciascun pacchetto nativo sono nel report e nel suo manifest, associati
-alla specifica architettura e build. Il controllo della struttura di firma ad-hoc
-non dimostra che Gatekeeper accetti una nuova app scaricata con quarantena.
-Le prove DOM React con traffico HTTP/WS reale sostituiscono il bridge nativo Tauri
-e il canvas non disponibili in jsdom: non equivalgono a un collaudo visivo dell'app Mac.
+Su finestre basse la Home richiede scorrimento per tutte le card/PnL.
+
+Gli audit pip/npm e cargo non hanno vulnerabilità bloccanti. Cargo conserva sei
+avvisi di dipendenze non mantenute e l'avviso GLib RUSTSEC-2024-0429. I grafi nativi
+Mac provano GLib assente; i crate Unicode upstream presenti restano un limite di
+manutenzione. Nessun avviso è ignorato con opzioni dell'audit.
 
 ## Limiti operativi documentati
-
-- Il primo audit Python remoto ha rilevato 12 segnalazioni in `pip 25.0.1`,
-  tool dell'ambiente di compilazione. Il bootstrap è stato aggiornato e fissato
-  a `pip 26.2.1`; audit locale ripetuto senza vulnerabilità note. La nuova CI
-  deve verificare anche gli ambienti Mac specifici.
-- `cargo-audit` sul lockfile completo ha restituito zero vulnerabilità bloccanti
-  e avvisi informativi: `proc-macro-error`, cinque crate `unic-*` non mantenuti,
-  e [GLib RUSTSEC-2024-0429](https://rustsec.org/advisories/RUSTSEC-2024-0429.html).
-  La nuova build registra il grafo Cargo filtrato per ciascun Mac e richiede
-  che GLib non sia raggiungibile; il desktop Linux/GTK non è distribuito.
-  Gli avvisi non sono ignorati con opzioni dell'audit. I crate Unicode ancora
-  presenti nel grafo nativo costituiscono un limite di manutenzione upstream.
 
 - Supportato inizialmente BTCUSDT, USDT perpetual, UTA compatibile con Hedge Mode.
   Richiesto account/subaccount dedicato: ordini o posizioni esterne divergenti
@@ -79,8 +60,8 @@ e il canvas non disponibili in jsdom: non equivalgono a un collaudo visivo dell'
   richiede il collaudo account esterno.
 - PnL Oggi usa la candela mark delle 00:00 UTC e il ledger ricostruito. Non è un tick
   storico esatto dell'account. Assenza della candela richiesta blocca nuovi ingressi.
-- Su Linux le credenziali sono solo in memoria, per sviluppo. La persistenza definitiva
-  dei secret è progettata per macOS Keychain, non per un keyring plaintext alternativo.
+- Su Linux le credenziali sono solo in memoria, per sviluppo. Su macOS i secret
+  persistono nel Keychain nativo, collaudato con il backend incorporato nell'app.
 - `Cargo.lock` è ora conservato nel repository dalla build nativa validata;
   build e test Rust utilizzano `--locked`.
 

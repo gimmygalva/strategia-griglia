@@ -91,6 +91,10 @@ Lightweight Charts, Attività, dettagli tecnici, tutti i pannelli Impostazioni,
 avviso LIVE e campi credenziali vuoti. Il driver non modifica account, non
 introduce dati simulati e non chiama Start, Close All o Connect. È accessibile
 soltanto con `GRIDBOT_DESKTOP_QA=1`; ogni assertion fallita blocca il packaging.
+Alla seconda apertura confronta la timeline con gli eventi effettivi restituiti
+dall'API autenticata: gli audit della chiusura precedente devono essere visibili.
+Il wrapper legge i risultati tramite callback nativo; i soli comandi IPC
+applicativi consentiti al frontend rimangono `bootstrap` e `frontend_ready`.
 
 Il sidecar incorpora anche le CA TLS. Il controllo sul binario reale richiede
 che health abbia caricato CA non vuote dall'interno del bundle; REST e WSS

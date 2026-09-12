@@ -1,102 +1,44 @@
 # TEST REPORT — GRID HEDGE BOT 0.1.0 candidatura locale
 
-## Stato attuale — 12 settembre 2026
+Data report: 2026-09-12T16:04:22Z. Sorgenti applicazione compilata: `eec4ad3c41d4ceb416dc6f1f6f2c5138b21b3ab9`. Backend: `0.1.0-dev`; bundle desktop: `0.1.0`.
 
-La nuova suite locale ha superato 396 test Python e 95 test frontend, più un
-test E2E DOM con 15 verifiche HTTP/WS reali. È stata poi corretta una race nella
-fixture del saldo Recovery rilevata dal test post-build Intel: il test modifica
-ora il saldo sul server e attende il wallet del bot, per LONG e SHORT.
-La suite Recovery aggiornata ha superato 33 test. Il caso di saldo insufficiente
-LONG/SHORT ha superato cinque ripetizioni consecutive; la suite backend completa
-successiva è passata alle 14:56:23 UTC, senza failure, errori o skip. Build frontend
-pulita e backend Linux incorporato avviato/riaperto sono passati separatamente.
-La nuova build nativa deve ancora terminare.
+**Candidati installabili verificati su Mac Intel e Apple Silicon. Accettazione operativa sul conto Bybit Demo: NON SUPERATA. Non è una release definitiva.**
 
-Sono state aggiunte nove prove TLS HTTPS/WSS con handshake reali: CA attendibile,
-CA sconosciuta, hostname errato, mancata trasmissione di autenticazione prima della
-verifica, CA mancanti/vuote e rifiuto di dipendenze CA esterne nel processo congelato.
-REST e WS condividono ora CA certifi incorporate, TLS minimo 1.2 e hostname checking.
-Il test sul sidecar reale deve verificarne il caricamento dal bundle.
+[Build nativa e gate finali](https://github.com/gimmygalva/strategia-griglia/actions/runs/34703106420)
 
-Nel [run 34699982993](https://github.com/gimmygalva/strategia-griglia/actions/runs/34699982993)
-Linux ha superato l'intera suite. L'audit Python ha rilevato 12 segnalazioni nel
-`pip 25.0.1` di bootstrap: corretto fissando e installando `pip 26.2.1`.
-L'audit locale ripetuto ha restituito zero vulnerabilità su 76 pacchetti, senza
-pacchetti saltati. La CI bloccante ha impedito il packaging Mac su quel run fallito.
-L'audit Cargo completo ha trovato zero vulnerabilità bloccanti e sette avvisi
-informativi; elenco e limiti di manutenzione sono in KNOWN_ISSUES.md.
-La nuova build aggiunge controlli WKWebView reali di navigazione e avvisi LIVE,
-oltre a Keychain, certificati incorporati e audit Mac specifici.
+## Ultima suite completa
 
-Nel [run nativo 34698408928](https://github.com/gimmygalva/strategia-griglia/actions/runs/34698408928),
-la build Apple Silicon ha superato Rust, packaging, montaggio/copia DMG, apertura
-dell'app, database vuoto, migrazioni, riapertura, crash sidecar e suite post-build.
-Intel ha superato il controllo di apertura/persistenza del pacchetto ma ha fallito
-il test post-build Recovery citato sopra; nessun candidato Intel è stato approvato.
-La nuova build aggiunge Keychain reale, flag Hardened Runtime effettivi,
-visibilità della finestra e audit Python/Rust. Questi nuovi controlli non sono
-ancora dichiarati PASS.
+| Test | Esito | Data UTC / prova |
+| --- | --- | --- |
+| Backend, integrazione, sicurezza, desktop statico su Linux | PASS: 400, zero failure/errori/skip | 2026-09-12T15:46:34Z; backend-tests.xml |
+| Frontend React | PASS: 95, zero failure/pending | 2026-09-12T15:44:33Z; frontend-tests.json |
+| UI/backend E2E | PASS: 1 test, 15 verifiche interne | HTTP/WS realmente avviati con Local Simulator; suite ripetuta dopo build su ogni Mac |
+| Python lint/format/compile, dipendenze, schema Tauri | PASS | backend-quality.json, log e schema ufficiale della versione fissata |
+| Frontend lint/format/types/build pulita, Vite avviato | PASS | frontend-quality.json e frontend-start.json |
+| Freeze Linux reale | PASS | TLS dal bundle, health, API/WS autenticati, frontend incorporato, migrazioni, chiusura/riapertura e parent EOF |
+| Copertura combinata righe/branch Python | 84.24% | backend-coverage.json; non sostituisce il collaudo operativo |
+| Stress callback WS bloccate | PASS: 20 ripetizioni dei 2 casi | Dieci pong consumati per caso senza disconnessione; websocket-callback-stress.json |
 
-Nel [probe Bybit 34698486415](https://github.com/gimmygalva/strategia-griglia/actions/runs/34698486415),
-REST Mainnet, REST Demo e WS privato Demo hanno restituito **HTTP 403**.
-Il WS pubblico Mainnet ha ricevuto un ticker BTCUSDT reale: **PASS**.
-Credenziali ricevute, **non utilizzate**, ordini inviati **0**.
-Saldo, UID, account UTA, Hedge Mode, ordini, execution e mini Grid sul conto Demo:
-**NON VERIFICATO**. Non viene aggirato il blocco usando Testnet o altri endpoint.
+## Pacchetti nativi effettivamente testati
 
-I risultati sotto sono storici; non attribuiscono PASS alle verifiche nuove.
+| Mac | Build | Sistema verificato | Suite post-build |
+| --- | --- | --- | --- |
+| Intel | `2026-09-12T16:02:27Z-c731a8c109a6` | macOS-15.7.9-x86_64-i386-64bit | 399 Python PASS + 1 verifica Linux non applicabile; 95 frontend PASS; E2E PASS |
+| Apple Silicon | `2026-09-12T15:56:46Z-f5bb9e8f5a1d` | macOS-15.7.9-arm64-arm-64bit | 399 Python PASS + 1 verifica Linux non applicabile; 95 frontend PASS; E2E PASS |
 
-## Verifiche native avviate il 12 settembre 2026
+Per ciascun pacchetto: DMG verificato con hdiutil, montato readonly, app copiata, firma verificata con codesign e flag Hardened Runtime reali controllati. Backend incorporato e frontend WKWebView realmente aperti; database vuoto, migrazioni, integrità, permessi owner-only, chiusura, riapertura e persistenza verificati. Il backend è stato realmente ucciso con SIGKILL; il supervisor lo ha riavviato e il frontend ha acquisito il nuovo bootstrap, senza avviare ingressi. PATH/ambiente puliti impediscono dipendenze Python/Node/Docker esterne; questa prova non è una VM privata fisicamente di ogni toolchain.
 
-GitHub Actions eseguito realmente sul commit `83ad64cab9d01455bc067a739faa2a553738d19a`:
-[run 34697731586](https://github.com/gimmygalva/strategia-griglia/actions/runs/34697731586).
+Il Keychain nativo è stato collaudato attraverso il sidecar dentro la copia installata: salvataggio/rilettura di credenziali sintetiche, persistenza, namespaces DEMO/LIVE separati e assenza da API, SQLite e log. Non sono le API fornite dall’utente. Le CA TLS sono caricate dal bundle effettivo, con hostname verification e minimo TLS 1.2.
 
-- Suite completa Linux sul runner remoto: PASS.
-- Primo tentativo Mac Intel: FAIL nel test E2E della timeline. Gli eventi WebSocket
-  mancavano di ID e timestamp del record persistito. Corretta la pubblicazione del
-  record dopo commit e aggiunto un test HTTP/WS/REST sul contratto reale.
-- Primo tentativo Mac Apple Silicon: FAIL per la dipendenza `greenlet` assente.
-  Richiesta ora esplicitamente con l'extra ufficiale `SQLAlchemy[asyncio]`.
-- Build e collaudo installer: ancora da completare dopo la ripetizione delle suite.
-- Credenziali Demo ricevute dall'utente. Non sono contenute nel repository o negli
-  artefatti. La rete locale non raggiunge Bybit; collaudo remoto in preparazione.
+Rust: 6 test reali per architettura, cargo fmt, cargo clippy con warnings bloccanti e compilazione nativa. WKWebView: 10 verifiche DOM a ogni apertura, inclusi wizard DEMO, Home, canvas Lightweight Charts, Start offline bloccato, Attività e dettagli tecnici, tutti i tab Impostazioni, warning LIVE e campi secret vuoti. Alla riapertura la timeline viene confrontata con gli eventi reali persistiti dal backend.
 
-I risultati seguenti appartengono alla consegna sorgenti precedente, indicata dalla
-data. Non dimostrano il superamento della nuova build nativa o del conto Demo.
+Le catture schermo disponibili sono Home offline, non dati account/candele/ordini Demo. Navigazione e altre schermate sono verificate da DOM nativo; non viene dichiarata una revisione grafica manuale completa di ogni pagina. Su finestre basse la Home richiede scorrimento verticale.
 
-Data report: **2026-09-12T13:32:33Z**. Ambiente: Linux x86_64, Python 3.12, Node 24.
+## Suite Python per modulo
 
-**Esito delle prove locali: PASS. Accettazione operativa macOS + Bybit Demo:
-NON SUPERATA. Questa è una consegna di sorgenti, non una release definitiva.**
-
-## Ultima esecuzione completa
-
-- Backend, integrazione, sicurezza e verifiche statiche desktop: **383
-  test PASS**, 0 FAIL, 0 errori,
-  0 saltati.
-- Frontend React: **92 test PASS**,
-  0 FAIL, 0 non eseguiti.
-- E2E DOM React con backend e WebSocket realmente avviati: **1 test PASS,
-  15 verifiche interne PASS** (non contate come test aggiuntivi);
-  `build/reports/frontend-backend-e2e.json`, 2026-09-12T13:29:14.106162+00:00.
-- Copertura Python di righe e branch combinati: **83.53%**. La copertura
-  non sostituisce le prove di apertura del sidecar congelato, eseguite separatamente.
-- La suite completa è stata ripetuta dopo le ultime correzioni. Il frontend è
-  stato ricostruito dopo la rimozione di dist; il freeze Linux ha eliminato i vecchi
-  output prima di incorporare il frontend attuale. Le sorgenti sono rimaste identiche
-  durante test e build: `build/reports/source-consistency.json`.
-
-I risultati precedenti, compresi i fallimenti poi corretti, sono conservati in
-`build/reports/attempt-*`. Non vengono usati per attribuire PASS alla versione attuale.
-
-## Suite backend e desktop statico
-
-Data e durata dell'esecuzione: `build/reports/backend-tests.xml`.
-
-| Modulo test | Test eseguiti | Risultato |
+| Modulo | Casi locali | Esito |
 | --- | ---: | --- |
-| `desktop.tests.test_packaging` | 11 | PASS |
-| `tests.test_api` | 14 | PASS |
+| `tests.test_api` | 17 | PASS |
 | `tests.test_crash_process` | 1 | PASS |
 | `tests.test_exchange` | 112 | PASS |
 | `tests.test_fault_server` | 38 | PASS |
@@ -105,124 +47,61 @@ Data e durata dell'esecuzione: `build/reports/backend-tests.xml`.
 | `tests.test_indicators` | 13 | PASS |
 | `tests.test_recovery` | 30 | PASS |
 | `tests.test_recovery_economics_runtime` | 4 | PASS |
-| `tests.test_recovery_runtime_math` | 32 | PASS |
+| `tests.test_recovery_runtime_math` | 33 | PASS |
 | `tests.test_recovery_targets` | 11 | PASS |
 | `tests.test_risk` | 46 | PASS |
 | `tests.test_runtime` | 4 | PASS |
 | `tests.test_security_persistence` | 4 | PASS |
+| `tests.test_startup_reconciliation` | 4 | PASS |
 | `tests.test_state_machine` | 5 | PASS |
+| `tests.test_tls` | 9 | PASS |
 | `tests.test_websocket` | 12 | PASS |
+| `desktop.tests.test_packaging` | 11 | PASS |
 
-## Compilazione, lint e dipendenze
+Grid: generazione, tick/qty rounding, attraversamenti ripetuti, hysteresis/debounce, TP LONG/SHORT e shift deterministico/idempotente. Recovery: media delle quantità effettivamente eseguite, injection, fee/slippage/break-even, limiti, attivazione/chiusura e funding. Risk: ambiente, account/UTA/Hedge, exposure, saldo, daily loss, stato incerto, duplicati e veto immediatamente prima dell’invio.
 
-| Verifica | Risultato | Data UTC | Evidenza |
-| --- | --- | --- | --- |
-| python-dependencies | PASS | 2026-09-12T13:28:46Z | `build/reports/python-dependencies.log` |
-| python-lint | PASS | 2026-09-12T13:28:46Z | `build/reports/python-lint.log` |
-| python-format | PASS | 2026-09-12T13:28:46Z | `build/reports/python-format.log` |
-| python-compile | PASS | 2026-09-12T13:28:46Z | `build/reports/python-compile.log` |
-| desktop-schema | PASS | 2026-09-12T13:28:46Z | `build/reports/desktop-schema.log` |
-| backend-tests | PASS | 2026-09-12T13:31:17Z | `build/reports/backend-tests.log` |
-| frontend-install | PASS | 2026-09-12T13:28:49Z | `build/reports/frontend-install.log` |
-| frontend-lint | PASS | 2026-09-12T13:28:53Z | `build/reports/frontend-lint.log` |
-| frontend-format | PASS | 2026-09-12T13:28:54Z | `build/reports/frontend-format.log` |
-| frontend-tests | PASS | 2026-09-12T13:28:57Z | `build/reports/frontend-tests.log` |
-| frontend-build | PASS | 2026-09-12T13:29:02Z | `build/reports/frontend-build.log` |
-| frontend-e2e-types | PASS | 2026-09-12T13:29:05Z | `build/reports/frontend-e2e-types.log` |
-| frontend-local-e2e | PASS | 2026-09-12T13:29:14Z | `build/reports/frontend-local-e2e.log` |
-| frontend-dependency-audit | PASS | 2026-09-12T13:29:25Z | `build/reports/frontend-dependency-audit.log` |
-| desktop-dependency-audit | PASS | 2026-09-12T13:29:34Z | `build/reports/desktop-dependency-audit.log` |
+Integrazione con il Local Simulator: richieste REST V5 firmate, ACK, reject, 429/5xx, timeout, fill parziali 4/10, execution prima dell’order update, duplicati, WS disconnect/subscription restore, guasti DB reali, restart/reconciliation e SIGKILL di processo reale. Queste prove non sono chiamate Demo Trading.
 
-Gli audit npm frontend e desktop hanno restituito zero vulnerabilità. L'audit
-advisory Python ha esito **NON VERIFICATO**, perché pip-audit non ha ricevuto una
-risposta completa da PyPI entro il timeout; vedere `python-dependency-audit.json`
-e relativo log. `pip check` verifica compatibilità delle dipendenze, non vulnerabilità.
-Rust/Cargo non sono compilati o sottoposti ad audit in questo ambiente.
+Nuova riapertura del conto verificato: ripristino da interfaccia persistente, ordini/lotti coerenti senza Start, MAINNET ancora disabilitata, fallimento rete e cancellazione per timeout con UI locale disponibile. La rilettura Keychain nativa è verificata separatamente; il percorso sul conto ufficiale resta NON VERIFICATO.
 
-## Prove funzionali e fault effettivamente eseguiti
+## Sicurezza e audit dipendenze
 
-Il Local Simulator è un server HTTP/WebSocket loopback controllato, con firme V5
-verificate. Usa esclusivamente credenziali di fixture. Non è Bybit Demo Trading.
+Input, CSRF/origin/Host dove applicabile, WS non autorizzato, XSS nei dati, path/command injection, secret non restituiti/loggati/salvati plaintext e separazione DEMO/LIVE: PASS nei test. Due soli comandi IPC applicativi consentiti: bootstrap e frontend_ready. ALLOW_MAINNET_TRADING=false di default; ulteriori conferme UI/backend richieste. Nessun ordine Live inviato durante sviluppo o collaudo.
 
-| Verifica | Risultato | Metodo ed evidenza |
+pip-audit Linux e ciascun Mac: zero vulnerabilità e nessun pacchetto saltato. npm audit frontend/desktop: zero vulnerabilità. cargo-audit sul lockfile completo: zero vulnerabilità bloccanti, sei avvisi unmaintained e un avviso unsound GLib. Grafo Cargo nativo risolto: GLib assente da entrambe le build Mac. Avvisi conservati senza --ignore; dipendenze Unicode upstream non mantenute restano un limite. [Advisory GLib](https://rustsec.org/advisories/RUSTSEC-2024-0429.html).
+
+## Bybit ufficiale — limite esterno
+
+[Probe Linux iniziale](https://github.com/gimmygalva/strategia-griglia/actions/runs/34698486415) e [probe indipendenti Linux/Intel/ARM](https://github.com/gimmygalva/strategia-griglia/actions/runs/34701945968). Evidenze JSON Mac scaricate e SHA-256 verificate.
+
+| Test ufficiale | Esito |
+| --- | --- |
+| Public Linear Mainnet BTCUSDT WS | PASS: ticker reale ricevuto |
+| REST Mainnet /v5/market/time | FAIL: HTTP 403, limite esterno |
+| REST Demo ufficiale /v5/market/time | FAIL: HTTP 403, limite esterno |
+| WS privato Demo /v5/private | FAIL: HTTP 403, limite esterno |
+| Auth, saldo, UID, UTA/Hedge, create/fetch/cancel, execution, mini Grid e TP sul conto Demo | NON VERIFICATO |
+
+Credenziali Demo ricevute, non utilizzate. Ordini ufficiali inviati: 0. Il REST e il WS privato hanno rifiutato l’accesso dai runner disponibili; il motivo del rifiuto non è dedotto. Nessun VPN, proxy alternativo, Testnet o altro dominio usato per aggirarlo. [Demo Trading ufficiale](https://bybit-exchange.github.io/docs/v5/demo).
+
+## Verifiche esterne NON ESEGUIBILI / NON VERIFICATE
+
+- Developer ID, notarizzazione e Gatekeeper dopo download con quarantena: certificati/credenziali Apple assenti; firma ad-hoc con Hardened Runtime verificata.
+- macOS 15.5 esatto sul dispositivo utente: runner disponibili 15.7.9; non sostituiscono tale verifica.
+- VM clean install senza alcuna toolchain presente e upgrade effettivo tra versioni: non eseguiti; PATH/ambiente puliti, database esistente e struttura esterna al bundle verificati.
+- Connessione e trading sul conto Bybit ufficiale: blocco HTTP 403 sopra; non è una mancanza delle API ricevute.
+
+## Errori trovati, corretti e ritestati
+
+| Tentativo | Errore rilevato | Correzione / esito successivo |
 | --- | --- | --- |
-| Backend avviato, API e WS locale | PASS | Uvicorn/processi reali; auth, stato, errori, mutation gates e WS |
-| Frontend server avviato | PASS | Vite reale, HTTP 200 su `/` e modulo TS; `2026-09-12T13:31:25Z` |
-| SQLite vuoto, migrazioni e database esistente | PASS | Alembic 0001/0002, integrità, transazioni, permessi e reopen |
-| Ordini, ACK e TP | PASS | HTTP V5 loopback, ACK distinto da fill, execution effettive e reduceOnly con positionIdx 1/2 |
-| Grid e Dynamic Shift | PASS | Prezzi assoluti, sequenze crescenti/decrescenti, crossing ripetuto, hysteresis e debounce |
-| Partial fill | PASS | 10 richiesti, 4 eseguiti e 6 pending; media/exposure/recovery su quantità reali |
-| Eventi duplicati e fuori ordine | PASS | Execution prima di order; ID duplicato una sola volta; contraddizioni bloccanti |
-| Timeout, 429, 5xx e ACK perso | PASS | Fault HTTP reali, retry limitati per letture, nessun reinvio cieco di mutazioni |
-| WS disconnect, reconnect e heartbeat | PASS | Socket reali, restore subscriptions, coda limitata; callback lenta non blocca pong |
-| Veto all'ultimo momento | PASS | Disconnect/funding durante commit e revoca durante semaforo REST: nessun HTTP ordine |
-| Daily loss, mark e fondi | PASS | Mark stale blocca; baseline UTC ricostruito; lordo hedge, riserve e fee/slippage |
-| Injection, break-even e S/R | PASS | Formule indipendenti, tick/qtyStep conservativi, limiti e target netto prima di S/R |
-| Recovery completo LONG/SHORT | PASS | TP parziali, handoff, restart, funding; saldo finale ricomputato da cash flow reali del simulatore |
-| Funding appena liquidato e clock | PASS | Clock -1000 ms, finestre storiche contigue, paginazione e tail con margine server |
-| Restart e reconciliation | PASS | Ledger persistito, ordini remoti e posizioni confrontati prima di riabilitare ingressi |
-| Crash processo | PASS | SIGKILL reale, restart con stesso DB e server remoto; nessun ordine duplicato o auto-start |
-| STOP e CHIUDI TUTTO | PASS | Stop conserva posizioni/TP; conferme close riducono entrambi i lati senza riaprire |
-| Sicurezza API/secret | PASS | Bearer/cookie, Host/Origin/CSRF, input, path traversal; secret esclusi da risposta, ledger e log |
-| Home/Attività/Impostazioni/Wizard | PASS | React/jsdom; offline, errori, restart, realtime e conferme scritte |
-| UI con backend reale | PASS | React/jsdom e traffico HTTP/WS reale; controlli e dati derivati dal Local Simulator; native bridge e canvas sostituiti |
-| Configurazione Tauri e icona | PASS | Schema ufficiale del CLI pinned, capabilities, container icns e script gates; prove statiche |
-| Sidecar incorporato Linux | PASS | `2026-09-12T13:32:15Z`; HTTP/WS/static, DB, reopen e parent-pipe EOF |
+| 34697731586 | Audit realtime senza ID/time; greenlet mancante nel runtime Mac | Commit prima della pubblicazione dei metadati; dipendenza async esplicita e hidden import; suite e freeze successivi PASS |
+| 34698408928 Intel | Race della fixture saldo Recovery nel post-build | Saldo autorevole sul server, attesa wallet LONG/SHORT; cinque ripetizioni e suite complete successive PASS |
+| 34699982993 | pip 25.0.1: 12 advisory records | Bootstrap pip 26.2.1 fissato; audit successivi Linux/Mac zero vulnerabilità |
+| 34700762086 | Timeout del harness WKWebView: comando QA escluso dai permessi | Comando aggiuntivo rimosso; callback nativo per leggere risultati reali; IPC consentiti invariati |
+| 34701789380 ARM | Assunzione timing heartbeat 5ms su runner condiviso | Osservati dieci pong consumati con callback bloccata; 20 ripetizioni e suite complete PASS |
+| 34701789380 Intel / 34702435667 ARM | Timeline erroneamente attesa vuota alla seconda apertura | Confronto con audit reali persistiti; test native finali PASS |
 
-La prova E2E DOM usa il backend reale, la stessa logica strategica e socket TCP;
-non mocka state, ordini o API. Sostituisce soltanto bridge Tauri e rendering canvas
-non disponibili in jsdom. Non è una verifica visiva manuale o un test WKWebView.
+Le build con test falliti non sono promosse. L’ultima candidatura usa output puliti e l’intera suite ripetuta post-build. Consultare BUILD_MANIFEST.json e CANDIDATE_MANIFEST.json per versioni, date, architetture, esiti e SHA-256 del DMG. Le sorgenti compilate e la documentazione finale possono avere commit diversi solo per l’aggiornamento dei Markdown.
 
-La prova del sidecar Linux usa PATH privo di Python, Node e Docker e avvia il
-binario PyInstaller con il frontend incorporato. Dimostra il runtime congelato
-Linux; **non dimostra** l'installazione pulita di una `.app` Mac.
-Le deprecation warning di Starlette TestClient/AnyIO restano nel log;
-non vengono nascoste o trasformate in errori ignorati del motore.
-
-## Verifiche esterne non eseguibili
-
-| Test richiesto | Risultato | Limite effettivo |
-| --- | --- | --- |
-| API Bybit Demo ufficiale, wallet/UID/UTA/Hedge Mode | NON VERIFICATO | Nessuna credenziale Demo fornita; REST esterno non raggiungibile |
-| Feed mercato pubblico Bybit ufficiale | NON VERIFICATO | REST ConnectError, WS gaierror, proxy esplicito ReadTimeout |
-| Demo order create/fetch/cancel e execution | NON VERIFICATO | Account e rete mancanti; ID del simulatore non sono ID ufficiali |
-| Mini Grid e TP su Bybit Demo | NON VERIFICATO | Stessi limiti; nessun trading LIVE usato come sostituto |
-| Recovery controllato su Demo ufficiale | NON VERIFICATO | Verificato localmente; non forzate operazioni per provocarlo sul conto |
-| Mainnet account reale | NON VERIFICATO | Adapter/gates locali verificati; nessun ordine con denaro reale inviato |
-| Rust/Tauri build nativa | NON VERIFICATO | Linux senza Cargo/Rust e toolchain Apple |
-| Grid Hedge Bot.app e Grid Hedge Bot.dmg | NON GENERATI | Richiedono build nativa macOS; nessun pacchetto fittizio |
-| Mount/copy/open/close/reopen DMG | NON VERIFICATO | Mancano macOS e pacchetto nativo |
-| Clean install e upgrade Mac | NON VERIFICATO | Mancano Mac Intel/Apple Silicon e bundle da installare |
-| macOS Keychain e permissions reali | NON VERIFICATO | Solo interfaccia controllata e permessi Linux verificati |
-| Developer ID, hardened runtime effettivo e notarizzazione | NON VERIFICATO | Supporto predisposto; certificati/toolchain Apple non disponibili |
-| Rendering manuale UI/WKWebView e sanity UX | NON VERIFICATO | Browser locale bloccato con ERR_BLOCKED_BY_CLIENT; nessuna prova visiva manuale dichiarata |
-| Audit advisory Python e Rust | NON VERIFICATO | Timeout PyPI; Cargo assente |
-| GitHub Actions su runner remoto | NON VERIFICATO | Pipeline predisposta, nessun repository remoto con esecuzione CI |
-
-Per gli esiti ambiente originali vedere `build/reports/environment.json`.
-La procedura di completamento delle verifiche ufficiali/native è in
-`docs/TESTING.md`, `docs/BYBIT_SETUP.md` e `docs/MACOS_BUILD.md`.
-`KNOWN_ISSUES.md` descrive anche i limiti operativi del motore e le funzioni rinviate.
-
-## Dettagli E2E e artefatto frontend
-
-L'E2E ha eseguito realmente il wizard completo, il salvataggio delle credenziali
-di fixture, la connessione firmata V5, Start, due fill e due TP, la timeline audit
-e la pausa. Ha verificato Auto Recovery ON/OFF durante RUNNING senza cambiare
-grid o sessione e senza creare ordini; una successiva valutazione RUNNING con
-Auto ON ha rifiutato la recovery oltre il limite di injection. L'interfaccia
-mostra gli ID e gli stati letti dall'API SQLite. Il remount riapre il WebSocket e
-rilegge lo stato in pausa mantenendo ordini ed execution. Il crash del backend
-è una prova separata, non viene dedotto dal remount dell'interfaccia.
-
-`build/reports/frontend-bundle-security.json` attesta che le credenziali note
-delle fixture sono assenti nei tre asset JavaScript della build finale e che
-non sono pubblicate source map. Non sostituisce la verifica del Keychain Mac
-o un audit di vulnerabilità delle dipendenze Python.
-
-## Decisione
-
-Zero test locali falliti nell'ultima suite. **MVP operativo finale non completato**:
-servono il conto Demo ufficiale collaudato e una vera installazione Mac verificata.
-DEMO seleziona `api-demo.bybit.com`; LIVE seleziona `api.bybit.com`, disabilitato
-per default con `ALLOW_MAINNET_TRADING=false`. Testnet non compare nella UI.
+**Accettazione operativa finale: NON SUPERATA finché il percorso sul conto Demo ufficiale non è dimostrato.**
