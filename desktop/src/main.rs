@@ -33,11 +33,6 @@ async fn frontend_ready(app: tauri::AppHandle, state: State<'_, Arc<BackendState
         .map_err(|_| "Frontend readiness worker failed".to_string())?
 }
 
-#[tauri::command]
-async fn native_ui_qa_result(state: State<'_, Arc<BackendState>>, report: native_ui_qa::Report) -> Result<(), String> {
-    state.record_native_ui_qa(report)
-}
-
 fn main() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -53,7 +48,7 @@ fn main() {
             supervisor::start(app.handle().clone(), state);
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![bootstrap, frontend_ready, native_ui_qa_result])
+        .invoke_handler(tauri::generate_handler![bootstrap, frontend_ready])
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 let state = window.state::<Arc<BackendState>>();

@@ -9,6 +9,7 @@ import os
 import platform
 import plistlib
 import re
+import shutil
 import signal
 import sqlite3
 import subprocess
@@ -130,12 +131,15 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
         "GRIDBOT_DESKTOP_QA": "1",
     }
     for run in (1, 2):
+        log_path = (screenshot_dir or root) / f"native-app-run-{run}.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        process_log = log_path.open("wb")
         process = subprocess.Popen(
             [str(executable)],
             cwd=root,
             env=environment,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=process_log,
+            stderr=process_log,
         )
         marker: dict[str, Any] = {}
         try:
@@ -146,6 +150,7 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
                 )
             native_report = data_dir / "qa-native-ui-result.json"
             native_report.unlink(missing_ok=True)
+            (data_dir / "qa-native-ui-progress.json").unlink(missing_ok=True)
             (data_dir / "qa-native-ui-request").write_text("run installed WKWebView checks\n")
             deadline = time.monotonic() + 90
             while not native_report.is_file():
@@ -221,11 +226,21 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
                 f"installed app run {run}: actual native UI, authenticated backend, migrations, SQLite, permissions, window close without orphan process"
             )
         finally:
+            if screenshot_dir is not None:
+                for name in (
+                    "desktop-status.json",
+                    "qa-native-ui-progress.json",
+                    "qa-native-ui-result.json",
+                ):
+                    source = data_dir / name
+                    if source.is_file():
+                        shutil.copy2(source, screenshot_dir / f"native-run-{run}-{name}")
             if process.poll() is None:
                 process.kill()
                 process.wait(timeout=5)
                 if marker.get("backend_pid") and pid_exists(marker["backend_pid"]):
                     os.killpg(marker["backend_pid"], signal.SIGKILL)
+            process_log.close()
     checks.append(
         "Clean app uses no installed Python/Node/Docker; same database survives close/reopen"
     )
@@ -242,8 +257,27 @@ def main() -> None:
         raise SystemExit("NON VERIFICATO: mounting and opening a .dmg requires macOS")
     if not arguments.dmg.is_file():
         raise SystemExit("A generated real DMG is required")
-    with tempfile.TemporaryDirectory(prefix="gridbot-package-qa-") as directory:
-        checks = verify(arguments.dmg.resolve(), Path(directory), arguments.report.parent.resolve())
+    try:
+        with tempfile.TemporaryDirectory(prefix="gridbot-package-qa-") as directory:
+            checks = verify(
+                arguments.dmg.resolve(), Path(directory), arguments.report.parent.resolve()
+            )
+    except (RuntimeError, OSError, subprocess.SubprocessError) as error:
+        arguments.report.parent.mkdir(parents=True, exist_ok=True)
+        arguments.report.write_text(
+            json.dumps(
+                {
+                    "result": "FAIL",
+                    "failure": str(error),
+                    "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "platform": platform.platform(),
+                    "architecture": platform.machine(),
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        raise
     report = {
         "result": "PASS",
         "checks": checks,

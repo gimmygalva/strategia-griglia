@@ -103,10 +103,6 @@ impl BackendState {
         self.inner.lock().map(|state| state.finished).unwrap_or(false)
     }
 
-    pub fn record_native_ui_qa(&self, report: crate::native_ui_qa::Report) -> Result<(), String> {
-        crate::native_ui_qa::record(&self.data_dir, report)
-    }
-
     fn update(&self, endpoint: Option<Bootstrap>, error: Option<String>, pid: Option<u32>, generation: u32) {
         if let Ok(mut state) = self.inner.lock() {
             state.endpoint = endpoint;

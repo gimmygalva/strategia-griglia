@@ -22,6 +22,15 @@ def junit_summary(path: Path) -> dict[str, int]:
     }
     if not result["tests"] or result["failures"] or result["errors"]:
         raise RuntimeError(f"Backend release gate has no tests or failed tests: {path.name}")
+    # The Linux-only fake-DMG refusal runs in Linux CI. It is the sole
+    # non-applicable check on native Mac builds; any other skip blocks packaging.
+    skipped = [case for case in document.iter("testcase") if case.find("skipped") is not None]
+    if len(skipped) != result["skipped"] or any(
+        case.get("name") != "test_linux_build_explicitly_refuses_to_make_a_fake_dmg"
+        or "Linux build refusal" not in case.find("skipped").get("message", "")
+        for case in skipped
+    ):
+        raise RuntimeError(f"Backend release gate has unexpected skipped tests: {path.name}")
     return result
 
 
@@ -30,6 +39,7 @@ def frontend_summary(path: Path) -> dict[str, int]:
     if (
         report.get("success") is not True
         or report.get("numFailedTests")
+        or report.get("numPendingTests")
         or not report.get("numPassedTests")
     ):
         raise RuntimeError(f"Frontend release gate did not pass: {path.name}")

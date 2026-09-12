@@ -83,12 +83,27 @@ def test_failed_backend_evidence_cannot_be_promoted(tmp_path: Path) -> None:
     with pytest.raises(RuntimeError, match="failed tests"):
         junit_summary(report)
     report.write_text('<testsuite tests="4" failures="0" errors="0" skipped="1"/>')
+    with pytest.raises(RuntimeError, match="unexpected skipped"):
+        junit_summary(report)
+    report.write_text(
+        '<testsuite tests="4" failures="0" errors="0" skipped="1">'
+        '<testcase name="test_linux_build_explicitly_refuses_to_make_a_fake_dmg">'
+        '<skipped message="This check specifically verifies the Linux build refusal"/>'
+        "</testcase></testsuite>"
+    )
     assert junit_summary(report)["tests"] == 4
 
 
 def test_failed_frontend_evidence_cannot_be_promoted(tmp_path: Path) -> None:
     report = tmp_path / "frontend.json"
     report.write_text(json.dumps({"success": False, "numPassedTests": 8, "numFailedTests": 1}))
+    with pytest.raises(RuntimeError, match="did not pass"):
+        frontend_summary(report)
+    report.write_text(
+        json.dumps(
+            {"success": True, "numPassedTests": 8, "numFailedTests": 0, "numPendingTests": 1}
+        )
+    )
     with pytest.raises(RuntimeError, match="did not pass"):
         frontend_summary(report)
 
