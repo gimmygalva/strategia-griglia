@@ -1,0 +1,245 @@
+.button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  transition:
+    filter 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
+}
+.button:hover:not(:disabled) {
+  filter: brightness(1.13);
+}
+.button.primary {
+  color: #eef3ff;
+  background: linear-gradient(110deg, #4474eb, #3e65cd);
+  box-shadow:
+    0 4px 15px #2253cf20,
+    inset 0 1px 0 #cfddff20;
+  border: 1px solid #749bff48;
+}
+.button.secondary {
+  background: #22304a45;
+  color: #bbcae5;
+  border: 1px solid #7d9dcf22;
+}
+.button.secondary.selected {
+  border-color: #6e9bef55;
+  color: #9ab9ff;
+}
+.button.danger {
+  color: #ffe5eb;
+  background: #a93750;
+  border: 1px solid #e2698360;
+}
+.full-width {
+  width: 100%;
+}
+.stop-button {
+  padding: 8px 10px;
+  color: #ff9aab;
+  background: #ac2d451d;
+  border: 1px solid #db5f7930;
+}
+.text-button {
+  color: #92b3ff;
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.text-button:hover {
+  color: #c2d4ff;
+}
+.icon-button {
+  color: #8fa2c1;
+  background: transparent;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+}
+.icon-button:hover {
+  color: #d9e6ff;
+  background: #859ed212;
+}
+.danger-link {
+  color: #c98293;
+  background: none;
+  font-size: 9px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  margin: 12px auto 0;
+}
+.card-note {
+  color: #93a4c1;
+  font-size: 9px;
+  line-height: 1.65;
+  margin-top: 10px;
+  text-align: center;
+}
+.recovery-idle {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 13px;
+  gap: 9px;
+}
+.recovery-idle svg {
+  color: #75bba9;
+}
+.recovery-idle strong {
+  color: #b3c6cd;
+  font-size: 9px;
+  font-weight: 550;
+  letter-spacing: 0.02em;
+}
+.recovery-idle p {
+  color: #899bb8;
+  font-size: 9px;
+}
+.recovery-active {
+  border-color: #8b7cd630;
+  background: linear-gradient(135deg, #2321437c, #151b2c);
+}
+.recovery-side {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 14px;
+  color: #ffaf91;
+}
+.recovery-side strong {
+  font-size: 10px;
+  font-weight: 600;
+}
+.pulse-dot {
+  width: 5px;
+  height: 5px;
+  background: #f0a576;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #f0a57660;
+}
+.recovery-metrics > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+}
+.recovery-metrics span {
+  font-size: 9px;
+  color: #96a7c2;
+}
+.recovery-metrics strong {
+  font-size: 11px;
+  font-weight: 550;
+}
+.recovery-metrics strong small {
+  font-size: 8px;
+  color: #90a1bd;
+}
+.recovery-progress {
+  font-size: 8px;
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  color: #96a8c7;
+}
+.recovery-progress > div {
+  width: 100%;
+  height: 3px;
+  border-radius: 3px;
+  background: #8b79c41d;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.recovery-progress i {
+  display: block;
+  background: #b19aee;
+  height: 100%;
+}
+.recovery-unsafe {
+  color: #ff9aaa;
+  font-size: 9px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+.recovery-button {
+  margin-top: 15px;
+  color: #d4c8ff;
+  background: #6652a035;
+  border: 1px solid #9a83e448;
+}
+.pnl-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+.mini-pnl {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 22px;
+}
+.mini-pnl > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #93a7c8;
+  font-size: 10px;
+}
+.mini-pnl strong {
+  font-size: 18px;
+  letter-spacing: -0.025em;
+  font-weight: 550;
+}
+.mini-pnl small {
+  font-size: 9px;
+  color: #93a2bf;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.home-footnote {
+  font-size: 9px;
+  color: #8e9db9;
+  margin: 19px 0 0;
+  line-height: 1.6;
+}
+.text-muted {
+  color: var(--muted);
+}
+.text-positive {
+  color: var(--green);
+}
+.text-negative {
+  color: var(--red);
+}
+.text-blue {
+  color: var(--blue);
+}
+.text-purple {
+  color: var(--purple);
+}
+.disconnected-label {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: #91a0bc;
+  margin-top: -10px;
+  margin-bottom: 16px;
+}

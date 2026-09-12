@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Bundled main window may bootstrap its supervised local backend only.",
+  "windows": ["main"],
+  "permissions": ["core:default", "allow-bootstrap", "allow-frontend-ready"]
+}

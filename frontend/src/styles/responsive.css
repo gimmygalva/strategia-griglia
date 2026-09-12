@@ -1,0 +1,542 @@
+@media (min-width: 1450px) {
+  .chart-canvas {
+    height: 539px;
+  }
+  .chart-panel {
+    min-height: 688px;
+  }
+}
+@media (max-width: 1080px) {
+  .topbar {
+    gap: 12px;
+    padding: 0 24px;
+  }
+  .topbar nav button {
+    padding: 10px 13px;
+  }
+  .topbar-actions {
+    min-width: 70px;
+  }
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+  .brand strong {
+    font-size: 11px;
+  }
+  .brand small {
+    font-size: 8px;
+  }
+  .main-content {
+    padding: 28px 24px;
+  }
+  .home-layout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+    gap: 15px;
+  }
+  .home-cards section {
+    padding: 18px;
+  }
+  .chart-header {
+    padding: 20px 18px;
+  }
+  .chart-toolbar {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+  .chart-footer {
+    padding: 16px 18px;
+    flex-wrap: wrap;
+  }
+  .market-title h2 span {
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+  .market-price strong {
+    font-size: 18px;
+  }
+  .card-heading h2 {
+    font-size: 10px;
+    gap: 7px;
+  }
+  .card-heading h2 svg {
+    width: 15px;
+  }
+  .mini-pnl {
+    padding: 18px;
+  }
+  .mini-pnl strong {
+    font-size: 16px;
+  }
+  .mini-pnl > div {
+    gap: 7px;
+    font-size: 9px;
+  }
+  .settings-content {
+    padding: 28px;
+  }
+  .settings-layout {
+    grid-template-columns: 185px minmax(0, 1fr);
+    gap: 20px;
+  }
+}
+@media (max-width: 850px) {
+  .home-layout {
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-panel {
+    width: 100%;
+    min-height: 0;
+  }
+  .chart-canvas {
+    height: 370px;
+  }
+  .home-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 15px;
+  }
+  .recovery-card {
+    grid-column: span 2;
+  }
+  .recovery-idle {
+    padding: 7px 0;
+  }
+  .recovery-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 24px;
+  }
+  .topbar {
+    height: 77px;
+    padding: 0 20px;
+  }
+  .topbar nav {
+    gap: 2px;
+  }
+  .topbar nav button {
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+  .topbar nav button svg {
+    width: 15px;
+  }
+  .brand strong {
+    font-size: 10px;
+  }
+  .strategy-chip {
+    display: none;
+  }
+  .settings-layout {
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 15px;
+  }
+  .settings-nav {
+    padding: 8px;
+  }
+  .settings-nav button {
+    font-size: 11px;
+    padding: 13px 9px;
+    gap: 9px;
+  }
+  .settings-nav button svg:last-child {
+    display: none;
+  }
+  .settings-content {
+    padding: 24px;
+  }
+  .wizard-sidebar {
+    width: 190px;
+    padding: 25px 20px;
+  }
+  .wizard {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+  .wizard-body {
+    padding: 21px 25px 25px;
+  }
+  .wizard-bottom {
+    padding: 19px 25px;
+  }
+  .wizard-body > h1 {
+    font-size: 25px;
+  }
+  .wizard-top {
+    padding: 18px 25px 5px;
+  }
+}
+@media (max-width: 640px) {
+  .app-shell {
+    padding-bottom: 48px;
+  }
+  .topbar {
+    height: auto;
+    min-height: 106px;
+    padding: 16px 18px 11px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .brand {
+    order: 1;
+  }
+  .topbar-actions {
+    order: 2;
+    margin-left: auto;
+  }
+  .topbar nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 6px;
+  }
+  .topbar nav button {
+    flex: 1;
+    justify-content: center;
+    padding: 9px 10px;
+  }
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+  .brand small {
+    margin-top: 2px;
+  }
+  .environment-badge {
+    padding: 6px 9px;
+    font-size: 9px;
+  }
+  .main-content {
+    padding: 25px 16px 22px;
+  }
+  .page-heading {
+    margin-bottom: 20px;
+    align-items: flex-start;
+    gap: 13px;
+    flex-direction: column;
+  }
+  .page-heading .button {
+    font-size: 10px;
+    padding: 8px 11px;
+  }
+  .eyebrow {
+    font-size: 8px;
+  }
+  .page-heading h1 {
+    font-size: 25px;
+  }
+  .chart-header {
+    padding: 18px;
+  }
+  .market-title h2 span {
+    display: inline;
+    margin-left: 5px;
+  }
+  .market-price strong {
+    font-size: 19px;
+  }
+  .market-title h2 {
+    font-size: 13px;
+  }
+  .bitcoin-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 23px;
+  }
+  .chart-canvas {
+    height: 310px;
+  }
+  .chart-footer {
+    gap: 10px;
+  }
+  .chart-legend {
+    gap: 10px;
+  }
+  .chart-legend span {
+    font-size: 8px;
+  }
+  .home-cards {
+    display: flex;
+    flex-direction: column;
+  }
+  .home-cards section {
+    padding: 20px;
+  }
+  .card-heading h2 {
+    font-size: 11px;
+  }
+  .equity-value {
+    font-size: 32px;
+  }
+  .portfolio-split strong {
+    font-size: 15px;
+  }
+  .portfolio-split span {
+    font-size: 11px;
+  }
+  .strategy-summary strong {
+    font-size: 14px;
+  }
+  .strategy-summary span {
+    font-size: 11px;
+  }
+  .exposure-lines > div {
+    font-size: 11px;
+  }
+  .exposure-lines strong {
+    font-size: 12px;
+  }
+  .recovery-metrics {
+    display: block;
+  }
+  .recovery-metrics span {
+    font-size: 10px;
+  }
+  .recovery-metrics strong {
+    font-size: 12px;
+  }
+  .recovery-idle {
+    padding: 13px;
+  }
+  .recovery-idle strong {
+    font-size: 10px;
+  }
+  .recovery-idle p {
+    font-size: 10px;
+  }
+  .pnl-strip {
+    gap: 9px;
+  }
+  .mini-pnl {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px 12px;
+    gap: 10px;
+  }
+  .mini-pnl > div {
+    font-size: 8px;
+    gap: 5px;
+  }
+  .mini-pnl > div svg {
+    width: 14px;
+  }
+  .mini-pnl strong {
+    font-size: 15px;
+  }
+  .mini-pnl small {
+    font-size: 7px;
+  }
+  .home-footnote {
+    font-size: 9px;
+  }
+  .statusbar {
+    padding: 11px 16px;
+    font-size: 8px;
+    gap: 10px;
+  }
+  .statusbar > div {
+    gap: 11px;
+    flex-wrap: wrap;
+  }
+  .status-safe {
+    display: none !important;
+  }
+  .statusbar svg {
+    width: 10px;
+  }
+  .settings-layout {
+    display: flex;
+    flex-direction: column;
+  }
+  .settings-nav {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    gap: 3px;
+    padding: 6px;
+  }
+  .settings-nav button {
+    width: auto;
+    padding: 10px;
+    white-space: nowrap;
+    flex-direction: column;
+    font-size: 8px;
+    gap: 6px;
+    flex: 1;
+  }
+  .settings-nav button svg {
+    width: 15px;
+  }
+  .settings-content {
+    padding: 23px 20px;
+  }
+  .settings-heading h2 {
+    font-size: 22px;
+  }
+  .form-grid {
+    gap: 18px 13px;
+  }
+  .field {
+    font-size: 10px;
+  }
+  .field input,
+  .field select {
+    padding: 12px 10px;
+    font-size: 11px;
+  }
+  .field small {
+    font-size: 9px;
+  }
+  .field-note {
+    font-size: 9px;
+  }
+  .review-list > div {
+    font-size: 10px;
+    gap: 15px;
+  }
+  .app-version strong {
+    font-size: 15px;
+  }
+  .toggle-row {
+    padding: 14px;
+    gap: 13px;
+    font-size: 10px;
+  }
+  .environment-picker {
+    gap: 10px;
+  }
+  .environment-picker button {
+    padding: 16px 13px;
+  }
+  .environment-picker small {
+    font-size: 9px !important;
+    margin-left: 0 !important;
+  }
+  .activity-panel,
+  .orders-panel {
+    padding: 21px 18px;
+  }
+  .activity-toolbar {
+    gap: 12px;
+  }
+  .filter-select > svg {
+    display: none;
+  }
+  .filter-select select {
+    max-width: 167px;
+    font-size: 9px;
+    padding: 8px;
+  }
+  .activity-toolbar h2 {
+    font-size: 13px;
+  }
+  .timeline-row {
+    grid-template-columns: 71px 23px minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px 0;
+  }
+  .timeline-row:not(:last-child):before {
+    left: 94px;
+  }
+  .timeline-time strong {
+    font-size: 9px;
+  }
+  .timeline-time small {
+    font-size: 8px;
+  }
+  .timeline-marker {
+    width: 23px;
+    height: 23px;
+  }
+  .timeline-marker svg {
+    width: 12px;
+  }
+  .timeline-content h3 {
+    font-size: 11px;
+  }
+  .backend-banner {
+    flex-wrap: wrap;
+    padding: 13px;
+    gap: 10px;
+  }
+  .backend-banner .button {
+    font-size: 9px;
+  }
+  .backend-banner strong {
+    font-size: 11px;
+  }
+  .backend-banner span {
+    font-size: 9px;
+  }
+  .alert {
+    font-size: 10px;
+    padding: 11px 12px;
+  }
+  .alert > svg {
+    width: 16px;
+  }
+  .wizard-backdrop {
+    padding: 12px;
+    align-items: center;
+  }
+  .wizard {
+    display: block;
+    min-height: 0;
+    height: min(790px, calc(100dvh - 24px));
+    max-height: calc(100dvh - 24px);
+    border-radius: 16px;
+  }
+  .wizard-sidebar {
+    display: none;
+  }
+  .wizard-main {
+    height: 100%;
+  }
+  .wizard-top {
+    padding: 19px 20px 12px;
+  }
+  .wizard-mobile-progress {
+    display: block;
+    height: 2px;
+    background: #31466a55;
+    flex-shrink: 0;
+  }
+  .wizard-mobile-progress i {
+    display: block;
+    height: 100%;
+    background: #759ff0;
+    transition: width 0.2s;
+  }
+  .wizard-body {
+    padding: 25px 22px;
+  }
+  .wizard-body > h1 {
+    font-size: 26px;
+  }
+  .wizard-description {
+    font-size: 11px;
+  }
+  .wizard-bottom {
+    padding: 18px 22px;
+  }
+  .wizard-safe-note {
+    font-size: 8px;
+  }
+  .welcome-content > p {
+    font-size: 12px;
+  }
+  .modal-backdrop {
+    padding: 17px;
+  }
+  .modal {
+    padding: 23px;
+  }
+  .modal-header h2 {
+    font-size: 16px;
+  }
+  .modal-description {
+    font-size: 11px;
+  }
+}

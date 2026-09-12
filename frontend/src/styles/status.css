@@ -1,0 +1,129 @@
+.statusbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 32px;
+  border-top: 1px solid var(--border);
+  background: #080d18ee;
+  backdrop-filter: blur(18px);
+  color: #8e9fbb;
+  font-size: 9px;
+}
+.statusbar > div {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.statusbar span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.status-env {
+  font-weight: 750;
+  letter-spacing: 0.05em;
+}
+.status-env.demo {
+  color: #8cabee;
+}
+.status-env.live {
+  color: #ff879d;
+}
+.tiny-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #96a5bf;
+  display: inline-block;
+}
+.tiny-dot.green {
+  background: #55cea6;
+}
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #ffd0b4;
+  background: #a9622219;
+  border: 1px solid #c1814b35;
+  border-radius: 10px;
+  padding: 12px 15px;
+  margin-bottom: 16px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.alert > svg {
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+.alert > span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.alert .icon-button {
+  margin-left: auto;
+}
+.alert-positive {
+  background: #39a68010;
+  color: #8bddbf;
+  border-color: #61bb9830;
+}
+.alert-positive > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.backend-banner {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  background: #22335450;
+  border: 1px solid #83a1d230;
+  border-radius: 12px;
+  padding: 15px 19px;
+  margin-bottom: 18px;
+  color: #a8bddf;
+}
+.backend-banner > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.backend-banner strong {
+  font-size: 12px;
+}
+.backend-banner span {
+  font-size: 10px;
+  color: #a4b1ca;
+}
+.loading-screen {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  color: #9eb7e6;
+}
+.loading-screen h1 {
+  font-size: 20px;
+}
+.loading-screen p {
+  font-size: 12px;
+  color: #90a2c0;
+}
+.spin {
+  animation: rotation 1.3s linear infinite;
+}
+@keyframes rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}

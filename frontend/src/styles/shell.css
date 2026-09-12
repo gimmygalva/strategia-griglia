@@ -1,0 +1,226 @@
+@import 'tailwindcss';
+
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  color: #e9effb;
+  background: #070b15;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --muted: #91a0b8;
+  --blue: #82aaff;
+  --green: #54d2ab;
+  --red: #ff879b;
+  --purple: #b8a0ff;
+  --border: rgba(160, 184, 226, 0.11);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 360px;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+button,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #82aaff;
+  outline-offset: 3px;
+}
+button {
+  border: 0;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+.app-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 37% -10%, #142241 0%, transparent 46%),
+    radial-gradient(ellipse at 100% 65%, #15152c50 0%, transparent 45%), #070b15;
+  padding-bottom: 42px;
+}
+.topbar {
+  height: 86px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 max(32px, calc((100vw - 1460px) / 2));
+  gap: 40px;
+  background: #080d18b3;
+  backdrop-filter: blur(25px);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.brand-mark {
+  display: block;
+  width: 42px;
+  height: 42px;
+}
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+}
+.brand strong {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 0.09em;
+  font-weight: 750;
+}
+.brand small {
+  display: block;
+  color: #8b9dbc;
+  letter-spacing: 0.28em;
+  font-size: 9px;
+  margin-top: 4px;
+}
+.topbar nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto;
+}
+.topbar nav button {
+  background: transparent;
+  color: #9aabc4;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 20px;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.topbar nav button:hover {
+  color: #e9effb;
+  background: #18233b66;
+}
+.topbar nav button.active {
+  background: linear-gradient(115deg, #26457760, #1b325850);
+  color: #9dbaff;
+  box-shadow: inset 0 0 0 1px #608bcb22;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 145px;
+}
+.environment-badge {
+  padding: 8px 13px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+}
+.environment-badge.demo {
+  color: #9fbdff;
+  background: #243e722e;
+  border: 1px solid #4f7ece42;
+}
+.environment-badge.live {
+  color: #ffc1cc;
+  background: #b2294140;
+  border: 1px solid #ff698963;
+}
+.env-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.env-dot.demo {
+  background: #86adff;
+  box-shadow: 0 0 9px #6096ff55;
+}
+.env-dot.live {
+  background: #ff7390;
+  box-shadow: 0 0 9px #ff3a5955;
+}
+.main-content {
+  max-width: 1524px;
+  margin: auto;
+  padding: 33px 32px 25px;
+}
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 27px;
+}
+.eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: #8b9ab8;
+  font-weight: 650;
+  text-transform: uppercase;
+  margin-bottom: 11px;
+}
+h1 {
+  font-size: clamp(24px, 2.3vw, 31px);
+  letter-spacing: -0.045em;
+  font-weight: 600;
+}
+h1 span {
+  color: #98a8c6;
+}
+.strategy-chip {
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: #9dafca;
+  background: #111a2a80;
+}
+.glass {
+  background: linear-gradient(135deg, #1a233750, #11172785 65%);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 7px 30px #0000001a,
+    inset 0 1px 0 #b4cbff04;
+  border-radius: 17px;
+  backdrop-filter: blur(18px);
+}
