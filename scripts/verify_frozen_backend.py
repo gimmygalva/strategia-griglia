@@ -156,6 +156,9 @@ def verify(binary: Path, data_dir: Path, *, verify_keychain: bool = False) -> li
             health = request(url, token, "/api/health")
             if health.get("status") != "ok" or health.get("mainnet_allowed") is not False:
                 raise RuntimeError("Frozen backend health/Mainnet safety check failed")
+            tls = health.get("tls", {})
+            if tls.get("source") != "bundled" or tls.get("ca_certificates", 0) <= 0:
+                raise RuntimeError("Frozen REST/WebSocket TLS certificate bundle is unavailable")
             state = request(url, token, "/api/state")
             if state.get("status") == "RUNNING":
                 raise RuntimeError("Frozen backend resumed automatic trading without confirmation")
@@ -228,6 +231,9 @@ def verify(binary: Path, data_dir: Path, *, verify_keychain: bool = False) -> li
         finally:
             stop(process, url, token)
     checks.append("embedded runtime: PATH contains no Python/Node/Docker dependencies")
+    checks.append(
+        "REST/WebSocket verified TLS roots are loaded from the actual frozen certificate bundle"
+    )
     checks.append("existing database survives graceful shutdown and reopen")
     if fixture is not None:
         checks.append(

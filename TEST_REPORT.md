@@ -2,15 +2,31 @@
 
 ## Stato attuale — 12 settembre 2026
 
-La nuova suite locale ha superato 387 test Python e 95 test frontend, più un
+La nuova suite locale ha superato 396 test Python e 95 test frontend, più un
 test E2E DOM con 15 verifiche HTTP/WS reali. È stata poi corretta una race nella
 fixture del saldo Recovery rilevata dal test post-build Intel: il test modifica
 ora il saldo sul server e attende il wallet del bot, per LONG e SHORT.
 La suite Recovery aggiornata ha superato 33 test. Il caso di saldo insufficiente
 LONG/SHORT ha superato cinque ripetizioni consecutive; la suite backend completa
-successiva è passata alle 14:40:06 UTC, senza failure, errori o skip. Build frontend
+successiva è passata alle 14:56:23 UTC, senza failure, errori o skip. Build frontend
 pulita e backend Linux incorporato avviato/riaperto sono passati separatamente.
 La nuova build nativa deve ancora terminare.
+
+Sono state aggiunte nove prove TLS HTTPS/WSS con handshake reali: CA attendibile,
+CA sconosciuta, hostname errato, mancata trasmissione di autenticazione prima della
+verifica, CA mancanti/vuote e rifiuto di dipendenze CA esterne nel processo congelato.
+REST e WS condividono ora CA certifi incorporate, TLS minimo 1.2 e hostname checking.
+Il test sul sidecar reale deve verificarne il caricamento dal bundle.
+
+Nel [run 34699982993](https://github.com/gimmygalva/strategia-griglia/actions/runs/34699982993)
+Linux ha superato l'intera suite. L'audit Python ha rilevato 12 segnalazioni nel
+`pip 25.0.1` di bootstrap: corretto fissando e installando `pip 26.2.1`.
+L'audit locale ripetuto ha restituito zero vulnerabilità su 76 pacchetti, senza
+pacchetti saltati. La CI bloccante ha impedito il packaging Mac su quel run fallito.
+L'audit Cargo completo ha trovato zero vulnerabilità bloccanti e sette avvisi
+informativi; elenco e limiti di manutenzione sono in KNOWN_ISSUES.md.
+La nuova build aggiunge controlli WKWebView reali di navigazione e avvisi LIVE,
+oltre a Keychain, certificati incorporati e audit Mac specifici.
 
 Nel [run nativo 34698408928](https://github.com/gimmygalva/strategia-griglia/actions/runs/34698408928),
 la build Apple Silicon ha superato Rust, packaging, montaggio/copia DMG, apertura

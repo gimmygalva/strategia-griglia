@@ -13,6 +13,7 @@ from websockets.asyncio.client import connect
 
 from gridbot.errors import AuthenticationError, NetworkError, ValidationError
 from gridbot.exchange import BybitAdapter
+from gridbot.tls import verified_context
 
 logger = logging.getLogger(__name__)
 
@@ -248,6 +249,7 @@ class WebSocketManager:
                 )
                 async with self._connector(
                     url,
+                    ssl=verified_context(),
                     open_timeout=self.handshake_timeout,
                     close_timeout=5,
                     max_size=2**20,

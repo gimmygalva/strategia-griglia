@@ -144,6 +144,30 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
                 raise RuntimeError(
                     "Installed app auto-started trading or enabled Mainnet by default"
                 )
+            native_report = data_dir / "qa-native-ui-result.json"
+            native_report.unlink(missing_ok=True)
+            (data_dir / "qa-native-ui-request").write_text("run installed WKWebView checks\n")
+            deadline = time.monotonic() + 90
+            while not native_report.is_file():
+                if process.poll() is not None or time.monotonic() >= deadline:
+                    raise RuntimeError("Installed WKWebView navigation smoke test did not complete")
+                time.sleep(0.1)
+            native_checks = json.loads(native_report.read_text())
+            if (
+                native_checks.get("result") != "PASS"
+                or len(native_checks.get("checks", [])) != 10
+                or not all(check.get("passed") is True for check in native_checks["checks"])
+            ):
+                raise RuntimeError(
+                    f"Installed WKWebView checks failed: {native_checks.get('failure')}"
+                )
+            if screenshot_dir is not None:
+                native_evidence = screenshot_dir / f"native-ui-smoke-run-{run}.json"
+                native_evidence.parent.mkdir(parents=True, exist_ok=True)
+                native_evidence.write_text(json.dumps(native_checks, indent=2) + "\n")
+            checks.append(
+                f"installed app run {run}: actual WKWebView wizard, Home, chart canvas, Activity, technical details, all Settings, LIVE warning and guarded offline Start"
+            )
             if screenshot_dir is not None:
                 screenshot = screenshot_dir / f"macos-installed-app-run-{run}.png"
                 screenshot.parent.mkdir(parents=True, exist_ok=True)

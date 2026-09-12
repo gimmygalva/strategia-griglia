@@ -34,6 +34,18 @@ e il canvas non disponibili in jsdom: non equivalgono a un collaudo visivo dell'
 
 ## Limiti operativi documentati
 
+- Il primo audit Python remoto ha rilevato 12 segnalazioni in `pip 25.0.1`,
+  tool dell'ambiente di compilazione. Il bootstrap è stato aggiornato e fissato
+  a `pip 26.2.1`; audit locale ripetuto senza vulnerabilità note. La nuova CI
+  deve verificare anche gli ambienti Mac specifici.
+- `cargo-audit` sul lockfile completo ha restituito zero vulnerabilità bloccanti
+  e avvisi informativi: `proc-macro-error`, cinque crate `unic-*` non mantenuti,
+  e [GLib RUSTSEC-2024-0429](https://rustsec.org/advisories/RUSTSEC-2024-0429.html).
+  La nuova build registra il grafo Cargo filtrato per ciascun Mac e richiede
+  che GLib non sia raggiungibile; il desktop Linux/GTK non è distribuito.
+  Gli avvisi non sono ignorati con opzioni dell'audit. I crate Unicode ancora
+  presenti nel grafo nativo costituiscono un limite di manutenzione upstream.
+
 - Supportato inizialmente BTCUSDT, USDT perpetual, UTA compatibile con Hedge Mode.
   Richiesto account/subaccount dedicato: ordini o posizioni esterne divergenti
   producono blocco. Non è implementata l'importazione automatica di posizioni manuali.

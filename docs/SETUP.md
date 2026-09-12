@@ -2,10 +2,12 @@
 
 ## Disponibilità attuale
 
-In questa sessione Linux sono consegnabili sorgenti, documentazione e risultati
-dei test applicabili. Il pacchetto macOS resta **NON VERIFICATO** finché non viene
-compilato e aperto realmente su macOS. Non usare un archivio dei sorgenti come
-se fosse una `.app` pronta. Consultare `TEST_REPORT.md` e `KNOWN_ISSUES.md`.
+I pacchetti sono costruiti e collaudati nativamente sui runner Mac Intel e Apple
+Silicon. Il manifest di ciascun pacchetto riporta la build e i test effettivi.
+È una candidatura locale finché non è superata l'accettazione operativa del
+conto Bybit Demo. I controlli REST e WS privati del runner hanno ricevuto HTTP 403:
+saldo e trading sul conto ufficiale restano NON VERIFICATI. Consultare
+`TEST_REPORT.md` e `KNOWN_ISSUES.md` per i risultati attuali e i limiti Apple.
 
 ## Uso del pacchetto macOS validato
 

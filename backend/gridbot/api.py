@@ -12,6 +12,7 @@ from starlette.middleware.cors import CORSMiddleware
 from . import __version__
 from .errors import BotError
 from .models import Credentials, Environment, Side, StrategyConfig
+from .tls import status as tls_status
 
 
 class CredentialsInput(BaseModel):
@@ -197,6 +198,7 @@ def create_app(
             "status": "ok",
             "environment": runtime.environment.value,
             "mainnet_allowed": runtime.mainnet_allowed,
+            "tls": tls_status(),
         }
 
     @app.get("/api/state")

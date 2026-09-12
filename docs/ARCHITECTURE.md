@@ -8,6 +8,7 @@ L'ambiente e l'UID verificato vincolano la persistenza. La UI non riceve mai i s
 | --- | --- |
 | V5 REST, firma, errori e limiti | exchange.py, account.py, environments.py |
 | Credenziali | credentials.py, macOS Keychain |
+| TLS REST/WS con CA incorporate | tls.py, certifi |
 | WS exchange, heartbeat, buffer e reconnect | websocket.py |
 | Grid assoluta e ripetizione dei tocchi | grid.py |
 | State machine, intenzioni e TP | orders.py, state_machine.py |
@@ -65,11 +66,20 @@ ascolta solo 127.0.0.1. API/WS richiedono autenticazione e origine locale autori
 Host/CSP/input/path controllati. Il token è solo in memoria desktop/frontend e non è
 una chiave Bybit. Nessun comando shell o percorso fornito dalla UI viene eseguito.
 
+REST e WebSocket usano lo stesso contesto TLS verificato, con hostname checking,
+TLS minimo 1.2 e CA certifi incorporate nel sidecar. Il processo congelato rifiuta
+CA esterne al proprio bundle. Health controlla il caricamento effettivo delle CA;
+il test sul sidecar reale richiede origine bundled e CA non vuote. Le prove TLS
+locali eseguono handshake HTTPS/WSS reali: fiducia positiva, CA sconosciuta,
+hostname errato e nessun dato applicativo inviato prima della verifica.
+
 La finestra diventa pronta soltanto dopo health del sidecar e frontend. La chiusura
 sospende la strategia e termina i processi; non chiude posizioni exchange. Una pipe
 posseduta dal parent permette al backend di sospendersi anche dopo crash del wrapper.
 Gli aggiornamenti sostituiscono il bundle e lasciano database/Keychain nella directory
-utente. Il collaudo effettivo di questo lifecycle su Mac è ancora da eseguire.
+utente. Le prove native di lifecycle e i loro esiti per architettura sono nel
+manifest del pacchetto e nel report. Le prove WKWebView cliccano controlli reali
+in modalità QA esplicita: non sostituiscono dati di account e non inviano ordini.
 
 ## Confini verificabili
 

@@ -62,4 +62,4 @@ Le credenziali DEMO e LIVE hanno spazi separati nel macOS Keychain. Il secret è
 
 Il connettore non devia automaticamente verso domini regionali o Testnet. Se il conto richiede un dominio diverso, la connessione resta bloccata e quel profilo necessita di un adattatore verificato specifico.
 
-La correttezza del protocollo è verificata dai test locali; il collegamento con un account ufficiale è **NON VERIFICATO** finché non vengono fornite chiavi Demo e una rete che raggiunga Bybit. I test locali non sono etichettati come Bybit Demo.
+La correttezza del protocollo è verificata dai test locali. Le credenziali Demo sono state ricevute ma non utilizzate: il controllo remoto del 12 settembre 2026 ha ricevuto HTTP 403 dal REST ufficiale e dal WS privato Demo. Il WS pubblico Mainnet ha ricevuto un ticker BTCUSDT reale. Il collegamento autenticato, il saldo e gli ordini del conto Demo restano **NON VERIFICATI**. I test locali non sono etichettati come Bybit Demo e il blocco non viene aggirato con Testnet o altri endpoint.

@@ -29,6 +29,7 @@ if [[ ! -x "$PROJECT_ROOT/.venv/bin/python" ]]; then
   "$PYTHON_BUILD" -m venv "$PROJECT_ROOT/.venv"
   PYTHON_BUILD="$PROJECT_ROOT/.venv/bin/python"
 fi
+"$PYTHON_BUILD" -m pip install --upgrade pip==26.2.1
 "$PYTHON_BUILD" -m pip install -r backend/requirements-dev.txt -r scripts/requirements-packaging.txt
 npm --prefix desktop ci
 "$PYTHON_BUILD" scripts/validate_desktop_config.py
@@ -41,6 +42,8 @@ rm -rf "$PROJECT_ROOT/dist/Grid Hedge Bot.app" "$PROJECT_ROOT/dist/Grid Hedge Bo
 rm -rf "$PROJECT_ROOT/dist/BUILD_MANIFEST.json" "$PROJECT_ROOT/dist/reports"
 rm -f "$PROJECT_ROOT"/desktop/binaries/gridbot-backend-*-apple-darwin
 mkdir -p "$PROJECT_ROOT/build/reports" "$PROJECT_ROOT/dist"
+
+"$PYTHON_BUILD" -m pip_audit --local --strict --format=json --output=build/reports/python-native-dependency-audit.json
 
 "$PYTHON_BUILD" -m ruff check backend tests scripts desktop/tests
 "$PYTHON_BUILD" -m pytest tests desktop/tests -q --junitxml=build/reports/backend-tests.xml
@@ -59,6 +62,8 @@ if [[ ! -f desktop/Cargo.lock ]]; then
   cargo generate-lockfile --manifest-path desktop/Cargo.toml
 fi
 cp desktop/Cargo.lock build/reports/Cargo.lock
+cargo metadata --manifest-path desktop/Cargo.toml --locked --features custom-protocol --format-version 1 --filter-platform "$NATIVE_TARGET" > build/reports/rust-native-metadata.json
+"$PYTHON_BUILD" scripts/record_native_rust_scope.py build/reports/rust-native-metadata.json --target "$NATIVE_TARGET"
 cargo fmt --manifest-path desktop/Cargo.toml
 cargo fmt --manifest-path desktop/Cargo.toml --check
 cargo test --manifest-path desktop/Cargo.toml --locked 2>&1 | tee build/reports/desktop-rust-tests.txt

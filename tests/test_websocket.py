@@ -336,6 +336,7 @@ async def test_actual_loopback_rest_and_ws_authentication_execution_and_cancella
 
     def connector(url, **kwargs):
         path = "/v5/private" if url.endswith("private") else "/v5/public/linear"
+        kwargs.pop("ssl", None)  # The explicit Local Simulator uses plaintext loopback.
         return connect(server.ws_url + path, **kwargs)
 
     manager = WebSocketManager(
@@ -399,6 +400,7 @@ async def test_actual_loopback_ws_reconnect_restores_subscription(local_bybit_se
         return None
 
     def connector(url, **kwargs):
+        kwargs.pop("ssl", None)  # The explicit Local Simulator uses plaintext loopback.
         return connect(
             server.ws_url + ("/v5/private" if url.endswith("private") else "/v5/public/linear"),
             **kwargs,

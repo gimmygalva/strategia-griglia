@@ -84,7 +84,19 @@ dell'app. Verifica separazione DEMO/LIVE, persistenza tra processi e assenza del
 secret in API, database, impostazioni e log. Non autentica un conto Bybit.
 Il marker frontend richiede anche che la finestra nativa sia visibile. Viene
 tentata una cattura schermo reale; se il runner la impedisce l'esito visivo è
-NON VERIFICATO e viene riportato separatamente.
+NON VERIFICATO e viene riportato separatamente. Un driver QA del wrapper clicca
+i controlli dell'app installata e verifica il DOM WKWebView reale: wizard,
+chiusura, tre card Home, equity mancante offline, Start disabilitato, canvas
+Lightweight Charts, Attività, dettagli tecnici, tutti i pannelli Impostazioni,
+avviso LIVE e campi credenziali vuoti. Il driver non modifica account, non
+introduce dati simulati e non chiama Start, Close All o Connect. È accessibile
+soltanto con `GRIDBOT_DESKTOP_QA=1`; ogni assertion fallita blocca il packaging.
+
+Il sidecar incorpora anche le CA TLS. Il controllo sul binario reale richiede
+che health abbia caricato CA non vuote dall'interno del bundle; REST e WSS
+condividono quel contesto verificato. Non dipende dal percorso OpenSSL/Python
+della macchina di compilazione. CA assenti o esterne al sidecar congelato
+bloccano la disponibilità del backend e l'avvio del trading.
 
 La verifica usa un flag QA esplicito e una directory temporanea; non tocca i dati
 reali dell'utente, non utilizza le sue credenziali e non invia ordini Live.

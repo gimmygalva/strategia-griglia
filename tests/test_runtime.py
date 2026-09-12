@@ -43,6 +43,7 @@ def make_runtime(path, server, *, mainnet=False):
         def connector(url, **kwargs):
             path = "/v5/private" if "private" in url else "/v5/public/linear"
             kwargs["proxy"] = None
+            kwargs.pop("ssl", None)  # Explicit test-only WSS-to-WS loopback redirect.
             return connect(server.ws_url + path, **kwargs)
 
         return WebSocketManager(

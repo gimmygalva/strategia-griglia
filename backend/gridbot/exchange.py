@@ -24,6 +24,7 @@ from gridbot.errors import (
     ValidationError,
 )
 from gridbot.models import AccountInfo, Credentials, Environment, Instrument, OrderIntent
+from gridbot.tls import verified_context
 
 
 class PermissionMissingError(BybitAPIError):
@@ -130,6 +131,7 @@ class BybitAdapter:
         self._order_guard: Callable[[OrderIntent], None] | None = None
         self._client = httpx.AsyncClient(
             transport=transport,
+            verify=verified_context(),
             timeout=httpx.Timeout(15, connect=5, read=10),
             follow_redirects=False,
             trust_env=False,

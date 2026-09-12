@@ -103,6 +103,10 @@ impl BackendState {
         self.inner.lock().map(|state| state.finished).unwrap_or(false)
     }
 
+    pub fn record_native_ui_qa(&self, report: crate::native_ui_qa::Report) -> Result<(), String> {
+        crate::native_ui_qa::record(&self.data_dir, report)
+    }
+
     fn update(&self, endpoint: Option<Bootstrap>, error: Option<String>, pid: Option<u32>, generation: u32) {
         if let Ok(mut state) = self.inner.lock() {
             state.endpoint = endpoint;
@@ -383,6 +387,9 @@ fn supervise(app: &AppHandle, state: &Arc<BackendState>) -> Result<(), String> {
                 let _ = app.emit("backend-restarted", attempt + 1);
             }
             loop {
+                if let Err(error) = crate::native_ui_qa::poll(app, &state.data_dir) {
+                    eprintln!("event=native_ui_qa_failed error={error}");
+                }
                 let qa_close = state.data_dir.join("qa-request-close");
                 if std::env::var("GRIDBOT_DESKTOP_QA").as_deref() == Ok("1") && qa_close.is_file() {
                     let _ = fs::remove_file(qa_close);
