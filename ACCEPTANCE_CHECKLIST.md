@@ -26,7 +26,7 @@ Bybit ufficiale. Risultati e date in TEST_REPORT.md e BUILD_MANIFEST.json.
 - [x] Probe WS ufficiale pubblico BTCUSDT con ticker reale
 - [ ] Auth/saldo/UID/UTA/Hedge/ordini/execution/mini Grid/TP sul Bybit Demo ufficiale
 - [ ] Feed/account Demo ufficiale osservati dal processo della app
-- [ ] macOS 15.5 esatto sul dispositivo utente
+- [ ] macOS Monterey 12.6.8 esatto sul dispositivo utente
 - [ ] Clean VM privata fisicamente di ogni toolchain
 - [ ] Upgrade reale tra versioni diverse
 - [ ] Developer ID, notarizzazione, Gatekeeper dopo download con quarantena

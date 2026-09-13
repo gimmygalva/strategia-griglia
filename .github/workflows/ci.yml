@@ -2,7 +2,7 @@ name: Grid Hedge Bot quality and native Mac packaging
 
 on:
   push:
-    branches: [main, grid-hedge-bot-macos-20260912]
+    branches: [main, grid-hedge-bot-macos-20260912, grid-hedge-bot-monterey-12]
     paths-ignore: ['**/*.md']
   pull_request:
   workflow_dispatch:
@@ -97,6 +97,7 @@ jobs:
     env:
       ALLOW_MAINNET_TRADING: "false"
       APPLE_SIGNING_IDENTITY: "-"
+      MACOSX_DEPLOYMENT_TARGET: "12.0"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

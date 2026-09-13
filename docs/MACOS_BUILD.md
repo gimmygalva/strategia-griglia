@@ -22,14 +22,18 @@ Servono macOS 13+, Xcode Command Line Tools, Rust stable con Cargo/rustfmt/clipp
 Python 3.12+ e Node 22+ con npm. Queste dipendenze servono **solo al compilatore**.
 Il pacchetto contiene il frontend compilato, l'eseguibile desktop Tauri e il backend
 Python congelato con PyInstaller. L'utilizzatore dell'app non deve installarle.
+Il target dell'applicazione è invece macOS 12.0 o successivo: sia la configurazione
+Tauri sia `MACOSX_DEPLOYMENT_TARGET` sono fissati a `12.0`.
 
 La build è nativa per architettura: Intel usa `x86_64-apple-darwin`, Apple Silicon
 usa `aarch64-apple-darwin`. Non si dichiara una build Universal senza verificarla.
 La pipeline `.github/workflows/ci.yml` prepara due runner separati, `macos-15-intel`
 e `macos-15`, secondo le [architetture ufficiali dei runner GitHub](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
-Sono usati macOS 15, Python 3.12, Node 22 e Rust stable; il supporto a versioni
-precedenti di macOS non è dimostrato da questi runner. macOS 15.5 dell'utente
-è nel requisito di sistema dichiarato ma non è la versione esatta del runner.
+Sono usati macOS 15, Python 3.12, Node 22 e Rust stable. Dopo il bundle, la pipeline
+legge `LSMinimumSystemVersion` e i comandi `LC_BUILD_VERSION`/
+`LC_VERSION_MIN_MACOSX` di ogni Mach-O incluso nel DMG, rifiutando requisiti oltre
+macOS 12.0. I runner disponibili non eseguono però macOS 12: l'apertura sul Mac
+dell'utente con Monterey 12.6.8 rimane il collaudo runtime esterno conclusivo.
 
 ## Comando di build
 
@@ -71,13 +75,14 @@ verifiche e limiti esterni. La classificazione è
 2. controlla l'app e il collegamento Applications;
 3. copia l'app con `ditto` e verifica la struttura di firma;
    controlla anche il flag Hardened Runtime della firma effettiva;
-4. avvia l'eseguibile della copia con directory dati vuota e PATH di soli tool OS;
-5. attende backend autenticato e frontend nativo operativo;
-6. verifica migrazioni, integrità SQLite, permessi e Mainnet disabilitata;
-7. chiude la finestra attraverso il medesimo handler di chiusura dell'app;
-8. verifica uscita senza backend orfano;
-9. riapre l'app e verifica dati conservati;
-10. uccide il sidecar, attende riavvio e nuova inizializzazione frontend, controlla
+4. verifica il target Monterey del bundle e di ogni eseguibile Mach-O incorporato;
+5. avvia l'eseguibile della copia con directory dati vuota e PATH di soli tool OS;
+6. attende backend autenticato e frontend nativo operativo;
+7. verifica migrazioni, integrità SQLite, permessi e Mainnet disabilitata;
+8. chiude la finestra attraverso il medesimo handler di chiusura dell'app;
+9. verifica uscita senza backend orfano;
+10. riapre l'app e verifica dati conservati;
+11. uccide il sidecar, attende riavvio e nuova inizializzazione frontend, controlla
     che il trading non riparta automaticamente e chiude di nuovo.
 
 Sui runner CI isolati, un controllo aggiuntivo usa credenziali sintetiche per

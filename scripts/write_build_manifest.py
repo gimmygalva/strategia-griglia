@@ -54,7 +54,12 @@ def evidence(root: Path) -> dict[str, Any]:
         "backend": junit_summary(directory / "final-backend-tests.xml"),
         "frontend": frontend_summary(directory / "final-frontend-tests.json"),
     }
-    for name in ("frozen-backend", "macos-package", "frontend-backend-e2e"):
+    for name in (
+        "frozen-backend",
+        "macos-package",
+        "macos-compatibility",
+        "frontend-backend-e2e",
+    ):
         report = json.loads((directory / f"{name}.json").read_text(encoding="utf-8"))
         if report.get("result") != "PASS" or not report.get("checks"):
             raise RuntimeError(f"Missing successful real {name} verification")

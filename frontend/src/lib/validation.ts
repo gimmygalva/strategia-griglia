@@ -21,7 +21,7 @@ export function isStrategyEvent(value: unknown): value is StrategyEvent {
     Number.isFinite(Date.parse(value.time)) &&
     typeof value.title === 'string' &&
     typeof value.event === 'string' &&
-    Object.hasOwn(value, 'details')
+    Object.prototype.hasOwnProperty.call(value, 'details')
   );
 }
 
@@ -29,7 +29,7 @@ export function isBotState(value: unknown): value is BotState {
   if (
     !object(value) ||
     !['DEMO', 'LIVE'].includes(String(value.environment)) ||
-    !Object.hasOwn(STATUS_LABEL, String(value.status))
+    !Object.prototype.hasOwnProperty.call(STATUS_LABEL, String(value.status))
   )
     return false;
   for (const key of [

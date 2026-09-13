@@ -14,7 +14,7 @@ sidecar, con suite complete post-build. Le build fallite precedenti sono escluse
 | Feed pubblico ufficiale | PASS nei probe remoti | Ticker BTCUSDT reale; dati account e feed dentro l'app con conto Demo non verificati |
 | LIVE account / trading | NON VERIFICATO | Default disabilitata; nessun ordine reale durante sviluppo |
 | Developer ID, notarizzazione, Gatekeeper download | NON VERIFICATO | Certificati Apple assenti; firma ad-hoc Hardened Runtime verificata |
-| macOS 15.5 esatto / dispositivo utente | NON VERIFICATO | Runner Mac 15.7.9 reali verificati, hardware utente non disponibile |
+| macOS Monterey 12.6.8 / dispositivo utente | NON VERIFICATO | Target e Mach-O verificati per 12.0; runner Mac 15.7.9 reali verificati, hardware Monterey dell'utente non disponibile |
 | Clean VM senza toolchain / upgrade tra versioni | NON VERIFICATO | Ambiente/PATH senza runtime esterni e riapertura con DB persistente verificati |
 | Revisione grafica manuale completa | NON VERIFICATO | Catture Home offline e controlli DOM WKWebView; non screenshot di tutte le pagine |
 

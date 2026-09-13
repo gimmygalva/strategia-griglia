@@ -35,6 +35,10 @@ npm --prefix desktop ci
 "$PYTHON_BUILD" scripts/validate_desktop_config.py
 export ALLOW_MAINNET_TRADING=false
 export APPLE_SIGNING_IDENTITY="${APPLE_SIGNING_IDENTITY:--}"
+# This applies to the Rust/Tauri executable, the PyInstaller bootloader and any
+# native extensions built during packaging.  The post-build Mach-O gate below
+# rejects the candidate if a bundled executable silently raises this target.
+export MACOSX_DEPLOYMENT_TARGET=12.0
 
 # Remove stale binaries and packages before running any release gate.
 rm -rf "$PROJECT_ROOT/build" "$PROJECT_ROOT/frontend/dist" "$PROJECT_ROOT/desktop/target"

@@ -69,8 +69,18 @@ def test_native_config_does_not_allow_remote_commands_or_shell_execution() -> No
     assert "remote" not in capability
     assert not any("shell:" in permission for permission in capability["permissions"])
     assert config["bundle"]["macOS"]["hardenedRuntime"] is True
+    assert config["bundle"]["macOS"]["minimumSystemVersion"] == "12.0"
     assert config["bundle"]["externalBin"] == ["binaries/gridbot-backend"]
     assert "http://127.0.0.1:*" in config["app"]["security"]["csp"]
+
+
+def test_monterey_target_is_applied_to_every_native_build_stage() -> None:
+    build_script = (ROOT / "scripts" / "build-macos.sh").read_text(encoding="utf-8")
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    vite = (ROOT / "frontend" / "vite.config.ts").read_text(encoding="utf-8")
+    assert "export MACOSX_DEPLOYMENT_TARGET=12.0" in build_script
+    assert 'MACOSX_DEPLOYMENT_TARGET: "12.0"' in workflow
+    assert "target: 'safari15'" in vite
 
 
 def test_desktop_config_matches_the_actual_pinned_official_schema() -> None:

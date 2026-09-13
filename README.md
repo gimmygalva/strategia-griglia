@@ -10,6 +10,9 @@ I pacchetti sono compilati su runner Mac reali, montati, copiati, avviati, riape
 e sottoposti a crash del backend. Solo una build con tutti i controlli applicabili
 superati produce un candidato installabile. Consultare TEST_REPORT.md,
 KNOWN_ISSUES.md e il BUILD_MANIFEST.json del pacchetto per gli esiti effettivi.
+La variante Monterey dichiara macOS 12.0 come target minimo e la pipeline analizza
+ogni eseguibile Mach-O incorporato; la prova finale sul Mac dell'utente con macOS
+12.6.8 resta un test esterno distinto dalla compilazione sui runner macOS 15.
 
 L'applicazione usa realmente le API V5 Bybit quando l'account e la rete sono disponibili.
 Non contiene un exchange simulato nella UI o nel processo desktop. Il server di prova è

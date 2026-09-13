@@ -21,9 +21,11 @@ from typing import Any
 if __package__:
     from .verify_frozen_backend import find_database
     from .verify_frozen_backend import verify as verify_sidecar
+    from .verify_macos_compatibility import MONTEREY_TARGET, verify_and_write
 else:
     from verify_frozen_backend import find_database
     from verify_frozen_backend import verify as verify_sidecar
+    from verify_macos_compatibility import MONTEREY_TARGET, verify_and_write
 
 
 def wait_marker(
@@ -116,6 +118,12 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
     sidecar = copied / "Contents" / "MacOS" / "gridbot-backend"
     if not executable.is_file() or not sidecar.is_file():
         raise RuntimeError("Application executable or frozen backend was not bundled")
+    compatibility_report = (screenshot_dir or root) / "macos-compatibility.json"
+    compatibility = verify_and_write(copied, compatibility_report, MONTEREY_TARGET)
+    checks.append(
+        f"Monterey compatibility gate: bundle target {compatibility['target']}; "
+        f"{compatibility['macho_binary_count']} Mach-O executables inspected"
+    )
     if os.environ.get("GITHUB_ACTIONS") == "true":
         keychain_data = root / "isolated-keychain-probe"
         keychain_data.mkdir(mode=0o700)

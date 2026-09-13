@@ -87,7 +87,7 @@ Credenziali Demo ricevute, non utilizzate. Ordini ufficiali inviati: 0. Il REST 
 ## Verifiche esterne NON ESEGUIBILI / NON VERIFICATE
 
 - Developer ID, notarizzazione e Gatekeeper dopo download con quarantena: certificati/credenziali Apple assenti; firma ad-hoc con Hardened Runtime verificata.
-- macOS 15.5 esatto sul dispositivo utente: runner disponibili 15.7.9; non sostituiscono tale verifica.
+- macOS Monterey 12.6.8 sul dispositivo utente: target bundle/Mach-O 12.0 verificabile in build; i runner disponibili 15.7.9 non sostituiscono l'esecuzione su Monterey.
 - VM clean install senza alcuna toolchain presente e upgrade effettivo tra versioni: non eseguiti; PATH/ambiente puliti, database esistente e struttura esterna al bundle verificati.
 - Connessione e trading sul conto Bybit ufficiale: blocco HTTP 403 sopra; non è una mancanza delle API ricevute.
 
