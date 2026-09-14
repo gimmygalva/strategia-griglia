@@ -2,7 +2,7 @@ name: Grid Hedge Bot quality and native Mac packaging
 
 on:
   push:
-    branches: [main, grid-hedge-bot-macos-20260912, grid-hedge-bot-monterey-12]
+    branches: [main, grid-hedge-bot-macos-20260912, grid-hedge-bot-monterey-12, grid-hedge-bot-intel-fix-20260914]
     paths-ignore: ['**/*.md']
   pull_request:
   workflow_dispatch:
@@ -90,8 +90,6 @@ jobs:
         include:
           - runner: macos-15-intel
             architecture: intel
-          - runner: macos-15
-            architecture: apple-silicon
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
     env:
