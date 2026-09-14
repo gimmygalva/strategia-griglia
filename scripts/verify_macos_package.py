@@ -152,6 +152,21 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
         marker: dict[str, Any] = {}
         try:
             marker = wait_marker(data_dir, process)
+            backend_command = subprocess.run(
+                ["ps", "-p", str(marker["backend_pid"]), "-o", "command="],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            staged_runtime = data_dir / "runtime"
+            if str(staged_runtime / "gridbot-backend-") not in backend_command:
+                raise RuntimeError("Backend was not launched from its verified private staging area")
+            staged_files = list(staged_runtime.glob("gridbot-backend-*"))
+            if len(staged_files) != 1 or staged_files[0].stat().st_mode & 0o077:
+                raise RuntimeError("Staged backend permissions or identity are unsafe")
+            startup_log = data_dir / "logs" / "backend-startup.log"
+            if not startup_log.is_file() or startup_log.stat().st_mode & 0o077:
+                raise RuntimeError("Backend startup diagnostics are missing or not owner-only")
             if marker.get("bot_status") == "RUNNING" or marker.get("mainnet_allowed") is not False:
                 raise RuntimeError(
                     "Installed app auto-started trading or enabled Mainnet by default"
@@ -250,7 +265,7 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
                     os.killpg(marker["backend_pid"], signal.SIGKILL)
             process_log.close()
     checks.append(
-        "Clean app uses no installed Python/Node/Docker; same database survives close/reopen"
+        "Clean app uses no installed Python/Node/Docker; verified private sidecar staging and startup diagnostics; same database survives close/reopen"
     )
     return checks
 

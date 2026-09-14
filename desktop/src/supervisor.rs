@@ -4,8 +4,8 @@ mod http;
 use rand::rngs::OsRng;
 use rand::RngCore;
 use serde::Serialize;
-use std::fs;
-use std::io::{self, BufRead, BufReader};
+use std::fs::{self, OpenOptions};
+use std::io::{self, BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -203,6 +203,69 @@ fn sidecar_path() -> io::Result<PathBuf> {
     Err(io::Error::new(io::ErrorKind::NotFound, "Embedded backend executable is missing"))
 }
 
+fn file_sha256(path: &Path) -> io::Result<String> {
+    let output = Command::new("/usr/bin/shasum")
+        .args(["-a", "256"])
+        .arg(path)
+        .output()?;
+    if !output.status.success() {
+        return Err(io::Error::other("Backend digest command failed"));
+    }
+    let stdout = String::from_utf8(output.stdout)
+        .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Backend digest is invalid"))?;
+    let digest = stdout
+        .split_whitespace()
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Backend digest is missing"))?;
+    if digest.len() != 64 || !digest.bytes().all(|value| value.is_ascii_hexdigit()) {
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "Backend digest is invalid"));
+    }
+    Ok(digest.to_ascii_lowercase())
+}
+
+fn stage_sidecar_with_digest(source: &Path, data_dir: &Path, expected: &str) -> io::Result<PathBuf> {
+    if file_sha256(source)? != expected {
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "Embedded backend digest mismatch"));
+    }
+    let directory = data_dir.join("runtime");
+    fs::create_dir_all(&directory)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&directory, fs::Permissions::from_mode(0o700))?;
+    }
+    let destination = directory.join(format!("gridbot-backend-{}", &expected[..16]));
+    if destination.is_file() && file_sha256(&destination).ok().as_deref() == Some(expected) {
+        return Ok(destination);
+    }
+    let temporary = directory.join(format!(".gridbot-backend-{}.tmp", std::process::id()));
+    let result = (|| -> io::Result<()> {
+        let bytes = fs::read(source)?;
+        let mut output = OpenOptions::new().write(true).create_new(true).open(&temporary)?;
+        output.write_all(&bytes)?;
+        output.sync_all()?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&temporary, fs::Permissions::from_mode(0o700))?;
+        }
+        if file_sha256(&temporary)? != expected {
+            return Err(io::Error::new(io::ErrorKind::InvalidData, "Staged backend digest mismatch"));
+        }
+        fs::rename(&temporary, &destination)
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(&temporary);
+    }
+    result?;
+    Ok(destination)
+}
+
+fn staged_sidecar(state: &BackendState) -> io::Result<PathBuf> {
+    let source = sidecar_path()?;
+    stage_sidecar_with_digest(&source, &state.data_dir, env!("GRIDBOT_SIDECAR_SHA256"))
+}
+
 fn random_token() -> String {
     let mut bytes = [0u8; 32];
     OsRng.fill_bytes(&mut bytes);
@@ -224,6 +287,24 @@ fn ready_url(line: &str) -> Option<String> {
 
 fn spawn_backend(path: &Path, state: &BackendState, token: &str) -> io::Result<(Child, mpsc::Receiver<String>)> {
     let allow_mainnet = std::env::var("ALLOW_MAINNET_TRADING").as_deref() == Ok("true");
+    let logs = state.data_dir.join("logs");
+    fs::create_dir_all(&logs)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&logs, fs::Permissions::from_mode(0o700))?;
+    }
+    let startup_log_path = logs.join("backend-startup.log");
+    let startup_log = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&startup_log_path)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&startup_log_path, fs::Permissions::from_mode(0o600))?;
+    }
+    let stderr = startup_log.try_clone()?;
     let mut command = Command::new(path);
     command
         .args(["--port", "0", "--data-dir"])
@@ -237,7 +318,7 @@ fn spawn_backend(path: &Path, state: &BackendState, token: &str) -> io::Result<(
         .current_dir(&state.data_dir)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::null());
+        .stderr(Stdio::from(stderr));
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
@@ -342,7 +423,8 @@ pub fn start(app: AppHandle, state: Arc<BackendState>) {
 }
 
 fn supervise(app: &AppHandle, state: &Arc<BackendState>) -> Result<(), String> {
-    let path = sidecar_path().map_err(|_| "Embedded backend executable is missing".to_string())?;
+    let path = staged_sidecar(state).map_err(|error| format!("Backend preparation failed ({:?})", error.kind()))?;
+    let mut last_failure = "Backend did not become ready".to_string();
     for attempt in 0..4u32 {
         if state.shutdown.load(Ordering::Acquire) {
             return Ok(());
@@ -350,7 +432,7 @@ fn supervise(app: &AppHandle, state: &Arc<BackendState>) -> Result<(), String> {
         state.update(None, None, None, attempt + 1);
         let token = random_token();
         let (mut child, receiver) = spawn_backend(&path, state, &token)
-            .map_err(|_| "Embedded backend could not start".to_string())?;
+            .map_err(|error| format!("Embedded backend could not start ({:?})", error.kind()))?;
         let deadline = Instant::now() + Duration::from_secs(45);
         let mut endpoint = None;
         let mut candidate = None;
@@ -364,8 +446,16 @@ fn supervise(app: &AppHandle, state: &Arc<BackendState>) -> Result<(), String> {
                     break;
                 }
             }
-            if !matches!(child.try_wait(), Ok(None)) {
-                break;
+            match child.try_wait() {
+                Ok(None) => {}
+                Ok(Some(status)) => {
+                    last_failure = format!("Backend exited during startup ({status})");
+                    break;
+                }
+                Err(error) => {
+                    last_failure = format!("Backend status unavailable ({:?})", error.kind());
+                    break;
+                }
             }
         }
         if state.shutdown.load(Ordering::Acquire) {
@@ -417,7 +507,7 @@ fn supervise(app: &AppHandle, state: &Arc<BackendState>) -> Result<(), String> {
             thread::sleep(Duration::from_millis(100));
         }
     }
-    Err("Backend could not remain healthy after three restarts; trading is paused".to_string())
+    Err(format!("{last_failure}; trading is paused. See backend-startup.log"))
 }
 
 pub fn request_shutdown(app: AppHandle, state: Arc<BackendState>) {
@@ -470,5 +560,21 @@ mod tests {
         let state = BackendState::new(std::env::temp_dir());
         state.shutdown.store(true, Ordering::Release);
         assert!(state.wait_ready(Duration::from_millis(1)).is_err());
+    }
+
+    #[test]
+    fn staged_sidecar_is_digest_verified_and_owner_executable() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let root = std::env::temp_dir().join(format!("gridbot-stage-test-{}", random_token()));
+        fs::create_dir_all(&root).unwrap();
+        let source = root.join("source");
+        fs::write(&source, b"verified sidecar bytes").unwrap();
+        let digest = file_sha256(&source).unwrap();
+        let staged = stage_sidecar_with_digest(&source, &root, &digest).unwrap();
+        assert_eq!(file_sha256(&staged).unwrap(), digest);
+        assert_eq!(fs::metadata(&staged).unwrap().permissions().mode() & 0o777, 0o700);
+        assert!(stage_sidecar_with_digest(&source, &root, &"0".repeat(64)).is_err());
+        fs::remove_dir_all(root).unwrap();
     }
 }

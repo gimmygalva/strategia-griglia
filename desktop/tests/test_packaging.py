@@ -83,6 +83,18 @@ def test_monterey_target_is_applied_to_every_native_build_stage() -> None:
     assert "target: 'safari15'" in vite
 
 
+def test_desktop_stages_verified_sidecar_and_preserves_startup_diagnostics() -> None:
+    supervisor = (ROOT / "desktop" / "src" / "supervisor.rs").read_text(encoding="utf-8")
+    build_script = (ROOT / "desktop" / "build.rs").read_text(encoding="utf-8")
+    assert "GRIDBOT_SIDECAR_SHA256" in build_script
+    assert "stage_sidecar_with_digest" in supervisor
+    assert 'join("runtime")' in supervisor
+    assert "backend-startup.log" in supervisor
+    assert ".stderr(Stdio::from(stderr))" in supervisor
+    assert 'Command::new("/usr/bin/shasum")' in supervisor
+    assert 'Command::new("/usr/bin/shasum")' in build_script
+
+
 def test_desktop_config_matches_the_actual_pinned_official_schema() -> None:
     validate(ROOT)
 
