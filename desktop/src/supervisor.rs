@@ -236,6 +236,11 @@ fn stage_sidecar_with_digest(source: &Path, data_dir: &Path, expected: &str) -> 
     }
     let destination = directory.join(format!("gridbot-backend-{}", &expected[..16]));
     if destination.is_file() && file_sha256(&destination).ok().as_deref() == Some(expected) {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&destination, fs::Permissions::from_mode(0o700))?;
+        }
         return Ok(destination);
     }
     let temporary = directory.join(format!(".gridbot-backend-{}.tmp", std::process::id()));
@@ -276,11 +281,39 @@ fn verify_code_signature(path: &Path) -> io::Result<()> {
     }
 }
 
+#[cfg(target_os = "macos")]
+fn clear_quarantine(path: &Path) -> io::Result<()> {
+    let probe = Command::new("/usr/bin/xattr")
+        .args(["-p", "com.apple.quarantine"])
+        .arg(path)
+        .output()?;
+    if !probe.status.success() {
+        return Ok(());
+    }
+    let removal = Command::new("/usr/bin/xattr")
+        .args(["-d", "com.apple.quarantine"])
+        .arg(path)
+        .output()?;
+    if removal.status.success() {
+        Ok(())
+    } else {
+        Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "La quarantena del backend locale non può essere rimossa",
+        ))
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn clear_quarantine(_path: &Path) -> io::Result<()> {
+    Ok(())
+}
+
 fn staged_sidecar(state: &BackendState) -> io::Result<PathBuf> {
     let source = sidecar_path()?;
-    verify_code_signature(&source)?;
     let digest = file_sha256(&source)?;
     let destination = stage_sidecar_with_digest(&source, &state.data_dir, &digest)?;
+    clear_quarantine(&destination)?;
     verify_code_signature(&destination)?;
     Ok(destination)
 }
@@ -306,6 +339,13 @@ fn ready_url(line: &str) -> Option<String> {
 
 fn spawn_backend(path: &Path, state: &BackendState, token: &str) -> io::Result<(Child, mpsc::Receiver<String>)> {
     let allow_mainnet = std::env::var("ALLOW_MAINNET_TRADING").as_deref() == Ok("true");
+    let runtime_tmp = state.data_dir.join("runtime").join("tmp");
+    fs::create_dir_all(&runtime_tmp)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&runtime_tmp, fs::Permissions::from_mode(0o700))?;
+    }
     let logs = state.data_dir.join("logs");
     fs::create_dir_all(&logs)?;
     #[cfg(unix)]
@@ -332,6 +372,8 @@ fn spawn_backend(path: &Path, state: &BackendState, token: &str) -> io::Result<(
         .env("GRIDBOT_PARENT_PID", std::process::id().to_string())
         .env("GRIDBOT_PARENT_STDIN", "true")
         .env("ALLOW_MAINNET_TRADING", if allow_mainnet { "true" } else { "false" })
+        .env("TMPDIR", &runtime_tmp)
+        .env("PYINSTALLER_RESET_ENVIRONMENT", "1")
         .env_remove("PYTHONPATH")
         .env_remove("PYTHONHOME")
         .current_dir(&state.data_dir)
@@ -442,16 +484,24 @@ pub fn start(app: AppHandle, state: Arc<BackendState>) {
 }
 
 fn supervise(app: &AppHandle, state: &Arc<BackendState>) -> Result<(), String> {
-    let path = staged_sidecar(state).map_err(|error| format!("Backend preparation failed ({:?})", error.kind()))?;
-    let mut last_failure = "Backend did not become ready".to_string();
+    let path = staged_sidecar(state).map_err(|error| {
+        format!(
+            "Preparazione del backend locale non riuscita: {error}. Diagnostica: backend-startup.log"
+        )
+    })?;
+    let mut last_failure = "Il backend locale non è diventato pronto".to_string();
     for attempt in 0..4u32 {
         if state.shutdown.load(Ordering::Acquire) {
             return Ok(());
         }
         state.update(None, None, None, attempt + 1);
         let token = random_token();
-        let (mut child, receiver) = spawn_backend(&path, state, &token)
-            .map_err(|error| format!("Embedded backend could not start ({:?})", error.kind()))?;
+        let (mut child, receiver) = spawn_backend(&path, state, &token).map_err(|error| {
+            format!(
+                "Avvio del backend locale non riuscito ({:?}): {error}. Diagnostica: backend-startup.log",
+                error.kind()
+            )
+        })?;
         let deadline = Instant::now() + Duration::from_secs(45);
         let mut endpoint = None;
         let mut candidate = None;
@@ -468,11 +518,12 @@ fn supervise(app: &AppHandle, state: &Arc<BackendState>) -> Result<(), String> {
             match child.try_wait() {
                 Ok(None) => {}
                 Ok(Some(status)) => {
-                    last_failure = format!("Backend exited during startup ({status})");
+                    last_failure = format!("Il backend locale si è chiuso durante l'avvio ({status})");
                     break;
                 }
                 Err(error) => {
-                    last_failure = format!("Backend status unavailable ({:?})", error.kind());
+                    last_failure =
+                        format!("Stato del backend locale non disponibile ({:?})", error.kind());
                     break;
                 }
             }
@@ -520,13 +571,18 @@ fn supervise(app: &AppHandle, state: &Arc<BackendState>) -> Result<(), String> {
             }
         }
         state.update(None, None, None, attempt + 1);
-        let _ = app.emit("backend-unavailable", "Backend stopped; reconnect and reconcile before trading");
+        let _ = app.emit(
+            "backend-unavailable",
+            "Il backend locale si è arrestato; il trading resta in pausa durante il riavvio",
+        );
         let retry_deadline = Instant::now() + Duration::from_secs(1 << attempt);
         while Instant::now() < retry_deadline && !state.shutdown.load(Ordering::Acquire) {
             thread::sleep(Duration::from_millis(100));
         }
     }
-    Err(format!("{last_failure}; trading is paused. See backend-startup.log"))
+    Err(format!(
+        "{last_failure}; il trading resta in pausa. Diagnostica: backend-startup.log"
+    ))
 }
 
 pub fn request_shutdown(app: AppHandle, state: Arc<BackendState>) {
@@ -542,7 +598,10 @@ pub fn request_shutdown(app: AppHandle, state: Arc<BackendState>) {
         if state.is_finished() {
             app.exit(0);
         } else {
-            let _ = app.emit("backend-unavailable", "Safe shutdown did not complete; application remains open");
+            let _ = app.emit(
+                "backend-unavailable",
+                "Chiusura sicura non completata; l'applicazione resta aperta",
+            );
         }
     });
 }

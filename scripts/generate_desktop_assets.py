@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Generate deterministic vector-derived desktop assets; no external downloads."""
+"""Generate desktop assets, preferring a locally staged user-provided PNG."""
 
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 
 def icon(size: int = 1024) -> Image.Image:
@@ -44,6 +44,22 @@ def icon(size: int = 1024) -> Image.Image:
     return image
 
 
+def source_icon(root: Path) -> Image.Image:
+    supplied = root / "desktop" / "assets" / "bot-icon-source.png"
+    if not supplied.is_file():
+        return icon()
+    with Image.open(supplied) as opened:
+        opened.load()
+        if min(opened.size) < 512:
+            raise ValueError(f"User icon is too small: {opened.size[0]}x{opened.size[1]}")
+        return ImageOps.fit(
+            opened.convert("RGBA"),
+            (1024, 1024),
+            method=Image.Resampling.LANCZOS,
+            centering=(0.5, 0.5),
+        )
+
+
 def font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     # Pillow bundles this font, so DMG text is independent of installed OS fonts.
     return ImageFont.load_default(size=size)
@@ -54,7 +70,7 @@ def generate(root: Path) -> None:
     assets = root / "desktop" / "assets"
     icons.mkdir(parents=True, exist_ok=True)
     assets.mkdir(parents=True, exist_ok=True)
-    source = icon()
+    source = source_icon(root)
     source.save(icons / "icon.png")
     source.save(icons / "icon.icns", format="ICNS")
     source.save(icons / "icon.ico", format="ICO", sizes=[(16, 16), (32, 32), (48, 48), (256, 256)])
@@ -99,7 +115,7 @@ def main() -> None:
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     arguments = parser.parse_args()
     generate(arguments.root)
-    print("Desktop assets generated: PNG, SVG, ICNS, ICO, DMG background")
+    print("Desktop assets generated: source PNG, ICNS, ICO, sizes and DMG background")
 
 
 if __name__ == "__main__":

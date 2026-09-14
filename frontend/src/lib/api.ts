@@ -15,6 +15,30 @@ interface Bootstrap {
 let bootstrap: Promise<Bootstrap | null> | undefined;
 let readyFor: string | undefined;
 
+export class ApiError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public status: number = 0,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+const DESKTOP_DIAGNOSTIC =
+  '~/Library/Application Support/Grid Hedge Bot/logs/backend-startup.log';
+
+export function desktopBackendError(error: unknown): string {
+  const raw =
+    typeof error === 'string' ? error : error instanceof Error ? error.message : '';
+  const reason = raw.replace(/\s+/g, ' ').trim().slice(0, 320) || 'causa non disponibile';
+  const suffix = /backend-startup\.log/i.test(reason)
+    ? ''
+    : ` Diagnostica: ${DESKTOP_DIAGNOSTIC}`;
+  return `Backend locale non disponibile: ${reason}${suffix}`;
+}
+
 export function invalidateBootstrap(): void {
   bootstrap = undefined;
   readyFor = undefined;
@@ -39,29 +63,23 @@ async function resolveBootstrap(): Promise<Bootstrap | null> {
     bootstrap = (async () => {
       if (!('__TAURI_INTERNALS__' in window)) return null;
       const { invoke } = await import('@tauri-apps/api/core');
-      const result = await invoke<Bootstrap>('bootstrap');
-      const parsed = new URL(result.url);
-      if (parsed.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(parsed.hostname)) {
-        throw new Error('Endpoint del backend locale non valido.');
+      try {
+        const result = await invoke<Bootstrap>('bootstrap');
+        const parsed = new URL(result.url);
+        if (parsed.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(parsed.hostname)) {
+          throw new Error('Endpoint del backend locale non valido.');
+        }
+        return result;
+      } catch (error) {
+        if (error instanceof ApiError) throw error;
+        throw new ApiError('BACKEND_STARTUP_ERROR', desktopBackendError(error));
       }
-      return result;
     })().catch((error) => {
       invalidateBootstrap();
       throw error;
     });
   }
   return bootstrap;
-}
-
-export class ApiError extends Error {
-  constructor(
-    public code: string,
-    message: string,
-    public status: number = 0,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
 }
 
 export async function request<T>(path: string, body?: unknown): Promise<T> {

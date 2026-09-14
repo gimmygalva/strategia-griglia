@@ -79,7 +79,7 @@ def main() -> None:
     with dmg.open("rb") as stream:
         digest = hashlib.file_digest(stream, "sha256").hexdigest()
     timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    version = json.loads((root / "desktop" / "package.json").read_text(encoding="utf-8"))["version"]
+    version = json.loads((root / "desktop" / "tauri.conf.json").read_text(encoding="utf-8"))["version"]
     manifest = {
         "version": version,
         "build": f"{timestamp}-{digest[:12]}",

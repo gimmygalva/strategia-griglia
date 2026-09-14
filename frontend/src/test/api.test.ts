@@ -75,7 +75,9 @@ describe('local API authentication and error handling', () => {
       .mockRejectedValueOnce(new Error('backend restarting'))
       .mockResolvedValueOnce({ url: 'http://127.0.0.1:43211', token: 'token-new' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply({ status: 'PAUSED' })));
-    await expect(api.state()).rejects.toThrow('Backend non raggiungibile');
+    await expect(api.state()).rejects.toThrow(
+      'Backend locale non disponibile: backend restarting',
+    );
     await expect(api.state()).resolves.toMatchObject({ status: 'PAUSED' });
     expect(invoke).toHaveBeenCalledTimes(2);
   });
@@ -122,7 +124,7 @@ describe('local API authentication and error handling', () => {
     });
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);
-    await expect(api.state()).rejects.toThrow('Backend non raggiungibile');
+    await expect(api.state()).rejects.toThrow('Endpoint del backend locale non valido');
     expect(fetch).not.toHaveBeenCalled();
   });
   it('signals native readiness once per backend generation', async () => {

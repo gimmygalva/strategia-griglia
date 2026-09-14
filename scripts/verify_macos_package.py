@@ -124,6 +124,18 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
         f"Monterey compatibility gate: bundle target {compatibility['target']}; "
         f"{compatibility['macho_binary_count']} Mach-O executables inspected"
     )
+    subprocess.run(
+        [
+            "/usr/bin/xattr",
+            "-w",
+            "com.apple.quarantine",
+            "0081;00000000;Safari;",
+            str(sidecar),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    checks.append("Nested backend marked with download quarantine before installed-app launch")
     if os.environ.get("GITHUB_ACTIONS") == "true":
         keychain_data = root / "isolated-keychain-probe"
         keychain_data.mkdir(mode=0o700)
@@ -164,6 +176,17 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
             staged_files = list(staged_runtime.glob("gridbot-backend-*"))
             if len(staged_files) != 1 or staged_files[0].stat().st_mode & 0o077:
                 raise RuntimeError("Staged backend permissions or identity are unsafe")
+            quarantine = subprocess.run(
+                [
+                    "/usr/bin/xattr",
+                    "-p",
+                    "com.apple.quarantine",
+                    str(staged_files[0]),
+                ],
+                capture_output=True,
+            )
+            if quarantine.returncode == 0:
+                raise RuntimeError("Staged backend retained the download quarantine attribute")
             startup_log = data_dir / "logs" / "backend-startup.log"
             if not startup_log.is_file() or startup_log.stat().st_mode & 0o077:
                 raise RuntimeError("Backend startup diagnostics are missing or not owner-only")

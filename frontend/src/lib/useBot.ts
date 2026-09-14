@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, invalidateBootstrap, notifyFrontendReady, openStateSocket } from './api';
+import {
+  api,
+  desktopBackendError,
+  invalidateBootstrap,
+  notifyFrontendReady,
+  openStateSocket,
+} from './api';
 import { EMPTY_STATE } from './types';
 import type { BotState, StrategyEvent } from './types';
 import { isBotState, isStrategyEvent } from './validation';
@@ -159,14 +165,12 @@ export function useBot() {
       void import('@tauri-apps/api/event')
         .then(async ({ listen }) => {
           for (const name of ['backend-restarted', 'backend-unavailable']) {
-            const stop = await listen(name, () => {
+            const stop = await listen<unknown>(name, (event) => {
               invalidateBootstrap();
               setBackendOnline(false);
               setSocketOnline(false);
               setError(
-                name === 'backend-unavailable'
-                  ? 'Il backend è stato interrotto. Attendi il riavvio e riconcilia lo stato.'
-                  : null,
+                name === 'backend-unavailable' ? desktopBackendError(event.payload) : null,
               );
               socket?.close();
               if (name === 'backend-restarted') void refresh();

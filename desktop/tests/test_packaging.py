@@ -52,6 +52,8 @@ def test_unsupported_freeze_target_is_rejected() -> None:
 
 
 def test_icon_has_real_icns_container_and_expected_png_dimensions() -> None:
+    generator = (ROOT / "scripts" / "generate_desktop_assets.py").read_text(encoding="utf-8")
+    assert "bot-icon-source.png" in generator
     icns = ROOT / "desktop" / "icons" / "icon.icns"
     assert icns.read_bytes()[:4] == b"icns"
     with Image.open(icns) as source:
@@ -88,7 +90,11 @@ def test_desktop_stages_verified_sidecar_and_preserves_startup_diagnostics() -> 
     assert "stage_sidecar_with_digest" in supervisor
     assert "verify_code_signature" in supervisor
     assert 'Command::new("/usr/bin/codesign")' in supervisor
+    assert 'Command::new("/usr/bin/xattr")' in supervisor
+    assert "clear_quarantine(&destination)" in supervisor
     assert 'join("runtime")' in supervisor
+    assert '.env("TMPDIR", &runtime_tmp)' in supervisor
+    assert "PYINSTALLER_RESET_ENVIRONMENT" in supervisor
     assert "backend-startup.log" in supervisor
     assert ".stderr(Stdio::from(stderr))" in supervisor
     assert 'Command::new("/usr/bin/shasum")' in supervisor
