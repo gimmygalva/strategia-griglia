@@ -261,9 +261,28 @@ fn stage_sidecar_with_digest(source: &Path, data_dir: &Path, expected: &str) -> 
     Ok(destination)
 }
 
+fn verify_code_signature(path: &Path) -> io::Result<()> {
+    let status = Command::new("/usr/bin/codesign")
+        .args(["--verify", "--strict"])
+        .arg(path)
+        .status()?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Embedded backend code signature is invalid",
+        ))
+    }
+}
+
 fn staged_sidecar(state: &BackendState) -> io::Result<PathBuf> {
     let source = sidecar_path()?;
-    stage_sidecar_with_digest(&source, &state.data_dir, env!("GRIDBOT_SIDECAR_SHA256"))
+    verify_code_signature(&source)?;
+    let digest = file_sha256(&source)?;
+    let destination = stage_sidecar_with_digest(&source, &state.data_dir, &digest)?;
+    verify_code_signature(&destination)?;
+    Ok(destination)
 }
 
 fn random_token() -> String {

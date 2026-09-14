@@ -202,6 +202,22 @@ it('executes the DOM flow against production FastAPI and actual loopback V5 REST
     const protectedIdentifiers = opened.orders.map((order) => order.orderId).sort();
     const auto = screen.getByRole('switch', { name: 'Recovery automatico' });
     for (const desired of [true, false, true]) {
+      const previousMarketTimestamp = (await stats()).market_timestamp;
+      const refreshed = await mutate('/api/e2e/market', { price: '67000' });
+      expect(refreshed.ok).toBe(true);
+      await until(
+        stats,
+        (value) =>
+          value.market_timestamp !== null &&
+          (previousMarketTimestamp === null ||
+            value.market_timestamp > previousMarketTimestamp),
+        'fresh market feed before Auto Recovery setting',
+      );
+      const readyToToggle = await state();
+      expect(
+        readyToToggle.status,
+        readyToToggle.error ?? 'Runtime must remain RUNNING before Auto Recovery setting',
+      ).toBe('RUNNING');
       await waitFor(() => expect(auto).toBeEnabled());
       await user.click(auto);
       const toggled = await until(
@@ -209,7 +225,10 @@ it('executes the DOM flow against production FastAPI and actual loopback V5 REST
         (value) => value.config.auto_recovery === desired,
         'real Home Auto Recovery setting',
       );
-      expect(toggled.status).toBe('RUNNING');
+      expect(
+        toggled.status,
+        toggled.error ?? 'Runtime must remain RUNNING after Auto Recovery setting',
+      ).toBe('RUNNING');
       await waitFor(() => (desired ? expect(auto).toBeChecked() : expect(auto).not.toBeChecked()));
       expect((await stats()).orders.map((order) => order.orderId).sort()).toEqual(
         protectedIdentifiers,
