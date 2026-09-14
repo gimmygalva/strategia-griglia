@@ -122,8 +122,14 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
     compatibility = verify_and_write(copied, compatibility_report, MONTEREY_TARGET)
     checks.append(
         f"Monterey compatibility gate: bundle target {compatibility['target']}; "
-        f"{compatibility['macho_binary_count']} Mach-O executables inspected"
+        f"{compatibility['macho_binary_count']} Mach-O executables inspected, including "
+        f"{compatibility['pyinstaller_embedded_macho_count']} embedded backend payloads; "
+        f"highest minimum OS {compatibility['maximum_macho_minimum_system_version']}"
     )
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        keychain_data = root / "isolated-keychain-probe"
+        keychain_data.mkdir(mode=0o700)
+        checks.extend(verify_sidecar(sidecar, keychain_data, verify_keychain=True))
     subprocess.run(
         [
             "/usr/bin/xattr",
@@ -136,10 +142,6 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
         capture_output=True,
     )
     checks.append("Nested backend marked with download quarantine before installed-app launch")
-    if os.environ.get("GITHUB_ACTIONS") == "true":
-        keychain_data = root / "isolated-keychain-probe"
-        keychain_data.mkdir(mode=0o700)
-        checks.extend(verify_sidecar(sidecar, keychain_data, verify_keychain=True))
     data_dir = root / "clean-user-data"
     data_dir.mkdir(mode=0o700)
     environment = {

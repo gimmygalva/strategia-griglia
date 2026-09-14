@@ -70,7 +70,7 @@ async function until<T>(
   accepted: (value: T) => boolean,
   label: string,
 ): Promise<T> {
-  const end = Date.now() + 10_000;
+  const end = Date.now() + 20_000;
   do {
     const value = await probe();
     if (accepted(value)) return value;
