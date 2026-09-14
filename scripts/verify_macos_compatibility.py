@@ -9,6 +9,7 @@ import platform
 import plistlib
 import re
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -86,6 +87,51 @@ def _macho_records(app: Path) -> list[dict[str, Any]]:
     return records
 
 
+def _onefile_macho_records(executable: Path) -> list[dict[str, Any]]:
+    """Inspect Mach-O payloads compressed inside a PyInstaller one-file executable."""
+
+    from PyInstaller.archive.readers import CArchiveReader
+
+    archive = CArchiveReader(str(executable))
+    binary_names = [
+        name for name, entry in archive.toc.items() if entry[-1] == "b"
+    ]
+    if not binary_names:
+        raise RuntimeError("PyInstaller backend archive contains no binary payloads")
+    records: list[dict[str, Any]] = []
+    with tempfile.TemporaryDirectory(prefix="gridbot-carchive-") as directory:
+        root = Path(directory)
+        for index, name in enumerate(binary_names):
+            candidate = root / f"payload-{index:04d}"
+            candidate.write_bytes(archive.extract(name))
+            description = subprocess.run(
+                ["file", "-b", str(candidate)],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            if "Mach-O" not in description:
+                continue
+            commands = subprocess.run(
+                ["otool", "-l", str(candidate)],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout
+            records.append(
+                {
+                    "path": f"{executable.relative_to(executable.parents[2])}::{name}",
+                    "archive_entry": name,
+                    "file_description": description,
+                    "minimum_system_versions": parse_macho_minimum_versions(commands),
+                    "container": "pyinstaller-carchive",
+                }
+            )
+    if not records:
+        raise RuntimeError("No Mach-O payloads were readable inside the PyInstaller backend")
+    return records
+
+
 def verify_app(app: Path, target: str = MONTEREY_TARGET) -> dict[str, Any]:
     app = app.resolve()
     info_path = app / "Contents" / "Info.plist"
@@ -101,6 +147,11 @@ def verify_app(app: Path, target: str = MONTEREY_TARGET) -> dict[str, Any]:
     records = _macho_records(app)
     if not records:
         raise RuntimeError("No Mach-O executables were found in the application bundle")
+    sidecar = app / "Contents" / "MacOS" / "gridbot-backend"
+    if not sidecar.is_file():
+        raise RuntimeError("Bundled PyInstaller backend is missing")
+    embedded_records = _onefile_macho_records(sidecar)
+    records.extend(embedded_records)
     reject_newer_minimums(records, target)
     observed = [value for record in records for value in record["minimum_system_versions"]]
     return {
@@ -108,11 +159,16 @@ def verify_app(app: Path, target: str = MONTEREY_TARGET) -> dict[str, Any]:
         "target": target,
         "bundle_minimum_system_version": declared,
         "macho_binary_count": len(records),
+        "pyinstaller_embedded_macho_count": len(embedded_records),
         "maximum_macho_minimum_system_version": max(observed, key=version_key),
         "macho_binaries": records,
         "checks": [
             f"Bundle declares macOS {target}",
-            f"All {len(records)} bundled Mach-O executables declare macOS {target} or older",
+            (
+                f"All {len(records)} Mach-O executables, including "
+                f"{len(embedded_records)} compressed PyInstaller payloads, "
+                f"declare macOS {target} or older"
+            ),
         ],
         "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "build_platform": platform.platform(),
