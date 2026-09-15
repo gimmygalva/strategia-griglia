@@ -14,12 +14,13 @@ def check_login():
         if login_button:
             if username == "Galva94" and password == "Gianmarco94":
                 st.session_state["logged_in"] = True
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Credenziali errate.")
                 st.stop()
+    st.stop()
 
-if "logged_in" not in st.session_state:
+if not st.session_state.get("logged_in", False):
     check_login()
 
 # ---------------------- MENU NAVIGAZIONE ----------------------
