@@ -76,6 +76,27 @@ def close_window(data_dir: Path, process: subprocess.Popen[bytes], child_pid: in
         raise RuntimeError("Window close left an orphan backend process")
 
 
+def code_entitlements(path: Path) -> dict[str, Any]:
+    result = subprocess.run(
+        ["codesign", "--display", "--entitlements", "-", str(path)],
+        check=True,
+        capture_output=True,
+    )
+    for payload in (result.stdout, result.stderr):
+        xml_start = payload.find(b"<?xml")
+        xml_end = payload.rfind(b"</plist>")
+        if xml_start >= 0 and xml_end >= xml_start:
+            entitlements = plistlib.loads(payload[xml_start : xml_end + len(b"</plist>")])
+            if isinstance(entitlements, dict):
+                return entitlements
+        binary_start = payload.find(b"bplist00")
+        if binary_start >= 0:
+            entitlements = plistlib.loads(payload[binary_start:])
+            if isinstance(entitlements, dict):
+                return entitlements
+    raise RuntimeError(f"Unable to decode code-signing entitlements for {path.name}")
+
+
 def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[str]:
     checks: list[str] = []
     mount = root / "mount"
@@ -118,6 +139,15 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
     sidecar = copied / "Contents" / "MacOS" / "gridbot-backend"
     if not executable.is_file() or not sidecar.is_file():
         raise RuntimeError("Application executable or frozen backend was not bundled")
+    sidecar_entitlements = code_entitlements(sidecar)
+    if sidecar_entitlements.get("com.apple.security.cs.disable-library-validation") is not True:
+        raise RuntimeError(
+            "Packaged backend lost com.apple.security.cs.disable-library-validation; "
+            "macOS Monterey would reject the extracted Python framework"
+        )
+    checks.append(
+        "Packaged backend preserves disable-library-validation for its PyInstaller runtime"
+    )
     compatibility_report = (screenshot_dir or root) / "macos-compatibility.json"
     compatibility = verify_and_write(copied, compatibility_report, MONTEREY_TARGET)
     checks.append(
