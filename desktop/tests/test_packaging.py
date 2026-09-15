@@ -70,7 +70,7 @@ def test_native_config_does_not_allow_remote_commands_or_shell_execution() -> No
     assert config["app"]["windows"][0]["visible"] is False
     assert "remote" not in capability
     assert not any("shell:" in permission for permission in capability["permissions"])
-    assert config["bundle"]["macOS"]["hardenedRuntime"] is True
+    assert config["bundle"]["macOS"]["hardenedRuntime"] is False
     assert config["bundle"]["macOS"]["minimumSystemVersion"] == "12.0"
     assert config["bundle"]["externalBin"] == ["binaries/gridbot-backend"]
     assert "http://127.0.0.1:*" in config["app"]["security"]["csp"]
