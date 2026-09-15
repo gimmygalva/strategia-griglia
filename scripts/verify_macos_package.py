@@ -76,25 +76,17 @@ def close_window(data_dir: Path, process: subprocess.Popen[bytes], child_pid: in
         raise RuntimeError("Window close left an orphan backend process")
 
 
-def code_entitlements(path: Path) -> dict[str, Any]:
-    result = subprocess.run(
-        ["codesign", "--display", "--entitlements", ":-", str(path)],
+def code_signature_flags(path: Path) -> set[str]:
+    signature = subprocess.run(
+        ["codesign", "--display", "--verbose=4", str(path)],
         check=True,
         capture_output=True,
-    )
-    for payload in (result.stdout, result.stderr):
-        xml_start = payload.find(b"<?xml")
-        xml_end = payload.rfind(b"</plist>")
-        if xml_start >= 0 and xml_end >= xml_start:
-            entitlements = plistlib.loads(payload[xml_start : xml_end + len(b"</plist>")])
-            if isinstance(entitlements, dict):
-                return entitlements
-        binary_start = payload.find(b"bplist00")
-        if binary_start >= 0:
-            entitlements = plistlib.loads(payload[binary_start:])
-            if isinstance(entitlements, dict):
-                return entitlements
-    raise RuntimeError(f"Unable to decode code-signing entitlements for {path.name}")
+        text=True,
+    ).stderr
+    match = re.search(r"flags=0x[0-9a-fA-F]+\(([^)]*)\)", signature)
+    if match is None:
+        raise RuntimeError(f"Unable to read code-signing flags for {path.name}")
+    return {flag.strip().lower() for flag in match.group(1).split(",")}
 
 
 def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[str]:
@@ -119,17 +111,14 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
             check=True,
             capture_output=True,
         )
-        signature = subprocess.run(
-            ["codesign", "--display", "--verbose=4", str(copied)],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stderr
-        flags = re.search(r"flags=0x[0-9a-fA-F]+\(([^)]*)\)", signature)
-        if flags is None or "runtime" not in flags.group(1).split(","):
-            raise RuntimeError("Installed application is missing actual Hardened Runtime flags")
+        app_flags = code_signature_flags(copied)
+        if "adhoc" not in app_flags or "runtime" in app_flags:
+            raise RuntimeError(
+                "Local-only application must be ad-hoc signed without Hardened Runtime"
+            )
         checks.append(
-            "DMG verified, mounted, Applications link present, application copied, signature structure and actual Hardened Runtime verified"
+            "DMG verified, mounted, Applications link present, application copied, "
+            "and local-only ad-hoc signature verified without Hardened Runtime"
         )
     finally:
         subprocess.run(["hdiutil", "detach", str(mount)], check=True, capture_output=True)
@@ -139,14 +128,14 @@ def verify(dmg: Path, root: Path, screenshot_dir: Path | None = None) -> list[st
     sidecar = copied / "Contents" / "MacOS" / "gridbot-backend"
     if not executable.is_file() or not sidecar.is_file():
         raise RuntimeError("Application executable or frozen backend was not bundled")
-    sidecar_entitlements = code_entitlements(sidecar)
-    if sidecar_entitlements.get("com.apple.security.cs.disable-library-validation") is not True:
+    sidecar_flags = code_signature_flags(sidecar)
+    if "adhoc" not in sidecar_flags or "runtime" in sidecar_flags:
         raise RuntimeError(
-            "Packaged backend lost com.apple.security.cs.disable-library-validation; "
-            "macOS Monterey would reject the extracted Python framework"
+            "Packaged backend must be ad-hoc signed without Hardened Runtime; "
+            "otherwise macOS Monterey library validation rejects Python.framework"
         )
     checks.append(
-        "Packaged backend preserves disable-library-validation for its PyInstaller runtime"
+        "Packaged backend is ad-hoc signed without Hardened Runtime for Monterey"
     )
     compatibility_report = (screenshot_dir or root) / "macos-compatibility.json"
     compatibility = verify_and_write(copied, compatibility_report, MONTEREY_TARGET)

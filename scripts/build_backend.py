@@ -97,7 +97,8 @@ def main() -> None:
     arguments = parser.parse_args()
     root = arguments.root.resolve()
     target = arguments.target or native_target()
-    identity = os.environ.get("APPLE_SIGNING_IDENTITY", "-")
+    identity_value = os.environ.get("APPLE_SIGNING_IDENTITY", "").strip()
+    identity = None if identity_value in {"", "-"} else identity_value
     command = build_command(root, target, identity)
     if arguments.plan:
         print(json.dumps({"status": "PLAN_ONLY", "target": target, "command": command}, indent=2))
