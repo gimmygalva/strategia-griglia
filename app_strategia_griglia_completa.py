@@ -23,10 +23,14 @@ with col2:
 # --- Calcoli automatici ---
 st.header("2. Calcoli Automatici")
 
-num_griglie = (range_max - range_min) / (range_min * (distanza_griglia / 100))
-capitale_per_griglia = profitto_per_griglia / (take_profit / 100)
+distanza_effettiva = max(distanza_griglia, 0.001)
+take_profit_effettivo = max(take_profit, 0.001)
+cap_operativo_pct_effettivo = max(cap_operativo_pct, 1)
+
+num_griglie = (range_max - range_min) / (range_min * (distanza_effettiva / 100))
+capitale_per_griglia = profitto_per_griglia / (take_profit_effettivo / 100)
 capitale_operativo = capitale_per_griglia * num_griglie
-capitale_totale = capitale_operativo / (cap_operativo_pct / 100)
+capitale_totale = capitale_operativo / (cap_operativo_pct_effettivo / 100)
 capitale_riserva = capitale_totale - capitale_operativo
 
 st.metric("Numero Griglie", f"{int(num_griglie)}")

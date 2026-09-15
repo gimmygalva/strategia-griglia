@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../../.." && pwd )"
+cd "$DIR"
+
+# Cerca Python 3
+PYTHON_BIN=""
+if command -v python3 &>/dev/null; then
+    PYTHON_BIN="python3"
+elif command -v /usr/local/bin/python3 &>/dev/null; then
+    PYTHON_BIN="/usr/local/bin/python3"
+elif command -v /opt/homebrew/bin/python3 &>/dev/null; then
+    PYTHON_BIN="/opt/homebrew/bin/python3"
+fi
+
+if [ -z "$PYTHON_BIN" ]; then
+    osascript -e 'display dialog "Python 3 non è stato trovato sul tuo Mac.\nInstalla Python 3 da python.org per avviare Strategia Griglia." with title "Python mancante" buttons {"OK"} default button "OK" with icon stop'
+    exit 1
+fi
+
+if [ ! -d "$DIR/.venv_mac" ]; then
+    $PYTHON_BIN -m venv "$DIR/.venv_mac"
+fi
+
+source "$DIR/.venv_mac/bin/activate"
+pip install -r "$DIR/requirements.txt" --quiet
+
+(sleep 2 && open "http://localhost:8501") &
+streamlit run "$DIR/app.py" --server.port 8501 --server.address 127.0.0.1 --server.headless false
