@@ -78,7 +78,7 @@ def close_window(data_dir: Path, process: subprocess.Popen[bytes], child_pid: in
 
 def code_entitlements(path: Path) -> dict[str, Any]:
     result = subprocess.run(
-        ["codesign", "--display", "--entitlements", "-", str(path)],
+        ["codesign", "--display", "--entitlements", ":-", str(path)],
         check=True,
         capture_output=True,
     )
